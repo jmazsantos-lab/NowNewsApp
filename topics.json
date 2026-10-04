@@ -1,0 +1,1742 @@
+{
+ "topics": [
+  {
+   "id": "industria-cervecera",
+   "name": "Industria Cervecera",
+   "short": "Cerveza",
+   "icon": "🍺",
+   "color": [
+    "#e7b45f",
+    "#7c4d12"
+   ],
+   "feeds": [
+    "https://www.brewersjournal.info/feed/",
+    "https://craftbrewingbusiness.com/feed/",
+    "https://www.brewbound.com/feed",
+    "https://www.just-drinks.com/rss/",
+    "https://www.drinksbusiness.com/feed/",
+    "https://www.bevindustry.com/rss",
+    "https://www.brewersguardian.com/feed/",
+    "https://beerandbrewing.com/feed/",
+    "https://www.brewersassociation.org/feed/",
+    "https://thebrewmagazine.com/feed/",
+    "https://hopculture.com/feed/",
+    "https://www.ratebeer.com/rss/",
+    "https://byo.com/feed/"
+   ],
+   "queries": [
+    {
+     "q": "brewing industry news today",
+     "lang": "en",
+     "country": "US"
+    },
+    {
+     "q": "craft beer market trends",
+     "lang": "en",
+     "country": "US"
+    },
+    {
+     "q": "beer production technology innovation",
+     "lang": "en",
+     "country": "US"
+    },
+    {
+     "q": "brewery mergers acquisitions investment",
+     "lang": "en",
+     "country": "US"
+    },
+    {
+     "q": "craft beer consumer trends demand",
+     "lang": "en",
+     "country": "US"
+    },
+    {
+     "q": "microbrewery industry report",
+     "lang": "en",
+     "country": "US"
+    },
+    {
+     "q": "beer sales volume market share",
+     "lang": "en",
+     "country": "US"
+    },
+    {
+     "q": "brewing industry challenges outlook",
+     "lang": "en",
+     "country": "US"
+    },
+    {
+     "q": "cerveza industria tendencias noticias",
+     "lang": "en",
+     "country": "US"
+    },
+    {
+     "q": "craft beer brewery closures openings",
+     "lang": "en",
+     "country": "US"
+    },
+    {
+     "q": "beer distributor market consolidation",
+     "lang": "en",
+     "country": "US"
+    },
+    {
+     "q": "brewing technology automation equipment",
+     "lang": "en",
+     "country": "US"
+    },
+    {
+     "q": "beer brand launch new product",
+     "lang": "en",
+     "country": "US"
+    }
+   ]
+  },
+  {
+   "id": "pet-envases-plasticos",
+   "name": "PET — Envases Plásticos",
+   "short": "PET",
+   "icon": "🧴",
+   "color": [
+    "#6ba3d0",
+    "#274d6e"
+   ],
+   "feeds": [
+    "https://www.plasticsnews.com/rss.xml",
+    "https://www.petpla.net/category/news/rss",
+    "https://www.petpla.net/rss",
+    "https://www.packagingdigest.com/rss.xml"
+   ],
+   "queries": [
+    {
+     "q": "PET resin prices market 2025",
+     "lang": "en",
+     "country": "US"
+    },
+    {
+     "q": "plastic PET Industry news today",
+     "lang": "en",
+     "country": "US"
+    },
+    {
+     "q": "PET bottle preform packaging industry",
+     "lang": "en",
+     "country": "US"
+    },
+    {
+     "q": "rPET recycled PET packaging news",
+     "lang": "en",
+     "country": "US"
+    },
+    {
+     "q": "polyethylene terephthalate beverage packaging",
+     "lang": "en",
+     "country": "US"
+    },
+    {
+     "q": "PET resin supply demand outlook",
+     "lang": "en",
+     "country": "US"
+    },
+    {
+     "q": "PET packaging regulations sustainability",
+     "lang": "en",
+     "country": "US"
+    },
+    {
+     "q": "PET plastic bottle manufacturer news",
+     "lang": "en",
+     "country": "US"
+    },
+    {
+     "q": "PET resin price forecast petrochemical",
+     "lang": "en",
+     "country": "US"
+    },
+    {
+     "q": "plastic bottle packaging market trends",
+     "lang": "en",
+     "country": "US"
+    },
+    {
+     "q": "recycled plastic bottle deposit return scheme",
+     "lang": "en",
+     "country": "US"
+    },
+    {
+     "q": "PET food grade recycling technology",
+     "lang": "en",
+     "country": "US"
+    },
+    {
+     "q": "PET depolymerization chemical recycling",
+     "lang": "en",
+     "country": "US"
+    },
+    {
+     "q": "plastic packaging extended producer responsibility",
+     "lang": "en",
+     "country": "US"
+    },
+    {
+     "q": "plastic packaging lightweighting innovation",
+     "lang": "en",
+     "country": "US"
+    }
+   ]
+  },
+  {
+   "id": "materias-primas-de-envase",
+   "name": "Materias Primas de Envase",
+   "short": "Envases",
+   "icon": "🏗️",
+   "color": [
+    "#a882d8",
+    "#563a86"
+   ],
+   "feeds": [
+    "https://www.glass-international.com/rss",
+    "https://www.canmakermagazine.com/rss",
+    "https://www.packagingeurope.com/rss.xml",
+    "https://www.packworld.com/rss.xml",
+    "https://www.packagingdigest.com/rss.xml",
+    "https://www.plasticsnews.com/rss.xml",
+    "https://www.recyclingtoday.com/rss/all",
+    "https://www.beveragedaily.com/rss/",
+    "https://www.metalpackaginginternational.com/rss",
+    "https://www.foodpackagingforum.org/news/feed/",
+    "https://www.packagingnews.co.uk/rss",
+    "https://www.foodbusinessnews.net/rss",
+    "https://www.glassonline.com/feed/",
+    "https://www.glassworldwide.co.uk/feed/",
+    "https://www.steelorbis.com/rss",
+    "https://www.meps.co.uk/rss/",
+    "https://www.aluminiuminsider.com/feed/",
+    "https://resource.co/rss",
+    "https://www.letsrecycle.com/feed/",
+    "https://www.icis.com/explore/resources/news/feed",
+    "https://www.foilholders.com/rss",
+    "https://www.cantech-international.com/feed/",
+    "https://www.plasticstoday.com/rss.xml",
+    "https://www.packagingstrategy.com/rss/all"
+   ],
+   "queries": [
+    {
+     "q": "glass bottle packaging market prices 2025",
+     "lang": "en",
+     "country": "US"
+    },
+    {
+     "q": "aluminum can beverage packaging market news",
+     "lang": "en",
+     "country": "US"
+    },
+    {
+     "q": "packaging materials prices PET glass aluminum",
+     "lang": "en",
+     "country": "US"
+    },
+    {
+     "q": "envases vidrio latas aluminio precios noticias",
+     "lang": "en",
+     "country": "US"
+    },
+    {
+     "q": "glass container manufacturer industry",
+     "lang": "en",
+     "country": "US"
+    },
+    {
+     "q": "beverage can aluminum market shortage supply",
+     "lang": "en",
+     "country": "US"
+    },
+    {
+     "q": "packaging raw materials cost inflation",
+     "lang": "en",
+     "country": "US"
+    },
+    {
+     "q": "metal packaging industry trends",
+     "lang": "en",
+     "country": "US"
+    },
+    {
+     "q": "closure cap label packaging materials news",
+     "lang": "en",
+     "country": "US"
+    },
+    {
+     "q": "tinplate steel packaging market news",
+     "lang": "en",
+     "country": "US"
+    },
+    {
+     "q": "glass bottle lightweighting innovation",
+     "lang": "en",
+     "country": "US"
+    },
+    {
+     "q": "aluminum recycling circular economy packaging",
+     "lang": "en",
+     "country": "US"
+    },
+    {
+     "q": "beverage container deposit refund system",
+     "lang": "en",
+     "country": "US"
+    },
+    {
+     "q": "packaging material supply chain disruption",
+     "lang": "en",
+     "country": "US"
+    }
+   ]
+  },
+  {
+   "id": "materias-primas-cerveceras",
+   "name": "Materias Primas Cerveceras",
+   "short": "Malta",
+   "icon": "🌾",
+   "color": [
+    "#7fb277",
+    "#2f5a2c"
+   ],
+   "feeds": [
+    "https://agfax.com/feed/",
+    "https://www.world-grain.com/rss/all",
+    "https://www.grains.org/rss",
+    "https://www.maltingbarley.org/rss/",
+    "https://www.usda.gov/rss/home.xml",
+    "https://www.farmprogress.com/rss",
+    "https://www.agweb.com/rss",
+    "https://www.morningstar.com/feeds/commodities",
+    "https://www.grainnet.com/rss/",
+    "https://www.commodityweather.com/rss",
+    "https://www.dtnpf.com/agriculture/web/ag/news/rss",
+    "https://www.agmrc.org/rss",
+    "https://www.barleyworld.org/rss",
+    "https://www.internationalhopgrowers.org/rss",
+    "https://www.agricensus.com/rss",
+    "https://www.farmersguardian.com/rss",
+    "https://www.cargill.com/news/rss"
+   ],
+   "queries": [
+    {
+     "q": "hops barley malt prices market 2025",
+     "lang": "en",
+     "country": "US"
+    },
+    {
+     "q": "brewing raw materials supply chain",
+     "lang": "en",
+     "country": "US"
+    },
+    {
+     "q": "malt barley harvest forecast",
+     "lang": "en",
+     "country": "US"
+    },
+    {
+     "q": "hop market prices brewers",
+     "lang": "en",
+     "country": "US"
+    },
+    {
+     "q": "barley crop report global production",
+     "lang": "en",
+     "country": "US"
+    },
+    {
+     "q": "malt prices Europe brewing industry",
+     "lang": "en",
+     "country": "US"
+    },
+    {
+     "q": "hop harvest yield forecast 2025",
+     "lang": "en",
+     "country": "US"
+    },
+    {
+     "q": "brewing yeast adjuncts ingredients news",
+     "lang": "en",
+     "country": "US"
+    },
+    {
+     "q": "grain commodity prices barley wheat",
+     "lang": "en",
+     "country": "US"
+    },
+    {
+     "q": "global hop shortage surplus market",
+     "lang": "en",
+     "country": "US"
+    },
+    {
+     "q": "malting barley drought climate impact",
+     "lang": "en",
+     "country": "US"
+    },
+    {
+     "q": "hop varieties new release craft beer",
+     "lang": "en",
+     "country": "US"
+    },
+    {
+     "q": "yeast strain innovation brewing biotech",
+     "lang": "en",
+     "country": "US"
+    },
+    {
+     "q": "grain harvest outlook crop production",
+     "lang": "en",
+     "country": "US"
+    }
+   ]
+  },
+  {
+   "id": "logistica-y-cadena-de-suministro",
+   "name": "Logística y Cadena de Suministro",
+   "short": "Logística",
+   "icon": "🚚",
+   "color": [
+    "#5cc2b5",
+    "#1c6b62"
+   ],
+   "feeds": [
+    "https://www.supplychaindive.com/feeds/news/",
+    "https://www.logisticsmgmt.com/rss/rss.xml",
+    "https://www.inboundlogistics.com/cms/feed/",
+    "https://www.dcvelocity.com/rss/all",
+    "https://www.supplychainbrain.com/rss/all",
+    "https://www.joc.com/rss/all",
+    "https://www.freightwaves.com/news/feed",
+    "https://www.transporttopics.com/rss",
+    "https://www.scmr.com/rss",
+    "https://www.foodlogistics.com/rss/all",
+    "https://www.industryweek.com/rss/all",
+    "https://feeds.feedburner.com/SupplyChainManagementReview",
+    "https://www.supplychaindigital.com/rss.xml",
+    "https://theloadstar.com/feed/",
+    "https://www.mmh.com/rss/all",
+    "https://gcaptain.com/feed/",
+    "https://www.maritime-executive.com/feed",
+    "https://shippingwatch.com/feed/",
+    "https://www.globaltrademagazine.com/rss/",
+    "https://www.truckinginfo.com/rss/all",
+    "https://www.logisticsmiddleeast.com/feed/",
+    "https://www.supplychainquarterly.com/rss",
+    "https://www.3plogistics.com/rss",
+    "https://www.gartner.com/en/supply-chain/rss"
+   ],
+   "queries": [
+    {
+     "q": "supply chain logistics news 2025",
+     "lang": "en",
+     "country": "US"
+    },
+    {
+     "q": "global logistics trends disruption",
+     "lang": "en",
+     "country": "US"
+    },
+    {
+     "q": "freight shipping rates news",
+     "lang": "en",
+     "country": "US"
+    },
+    {
+     "q": "warehouse distribution center operations",
+     "lang": "en",
+     "country": "US"
+    },
+    {
+     "q": "port congestion shipping delays",
+     "lang": "en",
+     "country": "US"
+    },
+    {
+     "q": "last mile delivery logistics trends",
+     "lang": "en",
+     "country": "US"
+    },
+    {
+     "q": "supply chain technology automation AI",
+     "lang": "en",
+     "country": "US"
+    },
+    {
+     "q": "cold chain logistics food beverage",
+     "lang": "en",
+     "country": "US"
+    },
+    {
+     "q": "supply chain resilience nearshoring",
+     "lang": "en",
+     "country": "US"
+    },
+    {
+     "q": "shipping container market spot rates",
+     "lang": "en",
+     "country": "US"
+    },
+    {
+     "q": "customs trade tariff supply chain impact",
+     "lang": "en",
+     "country": "US"
+    },
+    {
+     "q": "logistics robotics automation warehouse",
+     "lang": "en",
+     "country": "US"
+    },
+    {
+     "q": "beverage supply chain cold chain news",
+     "lang": "en",
+     "country": "US"
+    },
+    {
+     "q": "freight market outlook forecast 2025",
+     "lang": "en",
+     "country": "US"
+    }
+   ]
+  },
+  {
+   "id": "buenas-noticias",
+   "name": "Buenas Noticias",
+   "short": "Buenas",
+   "icon": "😊",
+   "color": [
+    "#e0a05a",
+    "#8a4a15"
+   ],
+   "feeds": [
+    "https://www.goodnewsnetwork.org/feed/",
+    "https://www.positive.news/feed/",
+    "https://greatergood.berkeley.edu/feed",
+    "https://www.upworthy.com/rss",
+    "https://www.huffpost.com/section/good-news/feed",
+    "https://www.sciencedaily.com/rss/top/science.xml",
+    "https://happynewspaper.com/feed/",
+    "https://www.goodnewsnetwork.org/category/world/feed/",
+    "https://mejorconbuenasnoticias.com/feed/",
+    "https://www.bbc.co.uk/mundo/ciencia_y_tecnologia/rss.xml",
+    "https://elpais.com/ciencia/rss/",
+    "https://www.nationalgeographic.es/feed",
+    "https://www.france24.com/es/medio-ambiente/rss",
+    "https://www.20minutos.es/rss/ciencia/",
+    "https://www.infobae.com/tendencias/rss/",
+    "https://www.lavanguardia.com/ciencia/rss.xml"
+   ],
+   "queries": [
+    {
+     "q": "good news today world inspiring achievement",
+     "lang": "en",
+     "country": "US"
+    },
+    {
+     "q": "positive breakthrough science humanity 2025",
+     "lang": "en",
+     "country": "US"
+    },
+    {
+     "q": "community hope generosity inspiring story world",
+     "lang": "en",
+     "country": "US"
+    },
+    {
+     "q": "innovation solution progress good news",
+     "lang": "en",
+     "country": "US"
+    },
+    {
+     "q": "buenas noticias positivas mundo hoy",
+     "lang": "es",
+     "country": "ES"
+    },
+    {
+     "q": "solidaridad esperanza avance humanidad logro",
+     "lang": "es",
+     "country": "ES"
+    },
+    {
+     "q": "descubrimiento científico innovación positiva 2025",
+     "lang": "es",
+     "country": "ES"
+    },
+    {
+     "q": "historias inspiradoras solidaridad comunidad ayuda",
+     "lang": "es",
+     "country": "ES"
+    }
+   ]
+  },
+  {
+   "id": "noticias-internacionales",
+   "name": "Noticias Internacionales",
+   "short": "Mundo",
+   "icon": "🌍",
+   "color": [
+    "#8f8be6",
+    "#2d2b8a"
+   ],
+   "feeds": [
+    "https://feeds.bbci.co.uk/news/world/rss.xml",
+    "https://feeds.reuters.com/reuters/topNews",
+    "https://rss.cnn.com/rss/edition_world.rss",
+    "https://www.aljazeera.com/xml/rss/all.xml",
+    "https://rss.dw.com/rdf/rss-en-all",
+    "https://www.france24.com/es/rss",
+    "https://feeds.skynews.com/feeds/rss/world.xml",
+    "https://abcnews.go.com/abcnews/internationalheadlines",
+    "https://feeds.npr.org/1001/rss.xml",
+    "https://feeds.a.dj.com/rss/RSSWorldNews.xml",
+    "https://www.euronews.com/rss",
+    "https://feeds.bbci.co.uk/news/business/rss.xml",
+    "https://www.theguardian.com/world/rss",
+    "https://rss.nytimes.com/services/xml/rss/nyt/World.xml",
+    "https://feeds.washingtonpost.com/rss/world",
+    "https://www.spiegel.de/international/feed/rss/",
+    "https://foreignpolicy.com/feed/",
+    "https://apnews.com/rss",
+    "https://www.voanews.com/api/zpikmv_mqs",
+    "https://www.swissinfo.ch/eng/rss/home",
+    "https://www.japantimes.co.jp/news/rss",
+    "https://www.project-syndicate.org/rss",
+    "https://rss.dw.com/rdf/rss-spa-all",
+    "https://www.bbc.co.uk/mundo/rss.xml"
+   ],
+   "queries": [
+    {
+     "q": "noticias internacionales hoy",
+     "lang": "es",
+     "country": "ES"
+    },
+    {
+     "q": "economia mundial noticias",
+     "lang": "es",
+     "country": "ES"
+    },
+    {
+     "q": "geopolitica conflictos internacionales",
+     "lang": "es",
+     "country": "ES"
+    },
+    {
+     "q": "comercio internacional economia global",
+     "lang": "es",
+     "country": "ES"
+    },
+    {
+     "q": "inflacion economia mundial 2025",
+     "lang": "es",
+     "country": "ES"
+    },
+    {
+     "q": "mercados financieros bolsa noticias",
+     "lang": "es",
+     "country": "ES"
+    },
+    {
+     "q": "organizaciones internacionales ONU G7 G20",
+     "lang": "es",
+     "country": "ES"
+    },
+    {
+     "q": "crisis humanitaria conflicto armado",
+     "lang": "es",
+     "country": "ES"
+    },
+    {
+     "q": "diplomatica relaciones internacionales acuerdo",
+     "lang": "es",
+     "country": "ES"
+    },
+    {
+     "q": "banco central tipos interes inflacion global",
+     "lang": "es",
+     "country": "ES"
+    }
+   ]
+  },
+  {
+   "id": "noticias-espana",
+   "name": "Noticias España",
+   "short": "España",
+   "icon": "🇪🇸",
+   "color": [
+    "#d07a5f",
+    "#7a2415"
+   ],
+   "feeds": [
+    "https://e00-elmundo.uecdn.es/rss/espana.xml",
+    "https://www.20minutos.es/rss/",
+    "https://www.rtve.es/api/news.rss",
+    "https://www.lavanguardia.com/rss/home.xml",
+    "https://www.elconfidencial.com/rss/",
+    "https://www.expansion.com/rss/portada.xml",
+    "https://www.europapress.es/rss/rss.aspx",
+    "https://cincodias.elpais.com/rss/feed.html",
+    "https://www.eleconomista.es/rss/rss-portada.xml",
+    "https://www.abc.es/rss/feeds/abc_EspanaEspana.xml",
+    "https://feeds.bbci.co.uk/mundo/rss.xml",
+    "https://www.elperiodico.com/es/rss/rss_portada.xml",
+    "https://feeds.elpais.com/mrss-s/pages/ep/site/elpais.com/portada",
+    "https://www.publico.es/rss",
+    "https://www.eldiario.es/rss/",
+    "https://www.vozpopuli.com/rss/",
+    "https://www.elespanol.com/rss/",
+    "https://www.lainformacion.com/rss",
+    "https://www.infobae.com/espana/rss/",
+    "https://www.agenciasinc.es/rss",
+    "https://www.idealista.com/news/rss/",
+    "https://www.elmundo.es/espana/rss.xml",
+    "https://www.naiz.eus/rss/naiz-portada",
+    "https://www.diariodecadiz.es/rss/portada"
+   ],
+   "queries": [
+    {
+     "q": "España noticias hoy",
+     "lang": "es",
+     "country": "ES"
+    },
+    {
+     "q": "economia España actualidad",
+     "lang": "es",
+     "country": "ES"
+    },
+    {
+     "q": "España empresas industria noticias",
+     "lang": "es",
+     "country": "ES"
+    },
+    {
+     "q": "política económica España gobierno",
+     "lang": "es",
+     "country": "ES"
+    },
+    {
+     "q": "empleo mercado laboral España",
+     "lang": "es",
+     "country": "ES"
+    },
+    {
+     "q": "exportaciones industria manufacturera España",
+     "lang": "es",
+     "country": "ES"
+    },
+    {
+     "q": "España inversión extranjera empresas",
+     "lang": "es",
+     "country": "ES"
+    },
+    {
+     "q": "comunidades autónomas elecciones política",
+     "lang": "es",
+     "country": "ES"
+    },
+    {
+     "q": "inflacion precios consumo España INE",
+     "lang": "es",
+     "country": "ES"
+    }
+   ]
+  },
+  {
+   "id": "noticias-cuba",
+   "name": "Noticias Cuba",
+   "short": "Cuba",
+   "icon": "🇨🇺",
+   "color": [
+    "#5fc6bc",
+    "#0d5b53"
+   ],
+   "feeds": [
+    "https://www.cubadebate.cu/rss/",
+    "https://www.diariodecuba.com/feed/",
+    "https://www.cibercuba.com/feed",
+    "https://www.reuters.com/world/cuba/rss"
+   ],
+   "queries": [
+    {
+     "q": "Cuba noticias hoy",
+     "lang": "es",
+     "country": "CU"
+    },
+    {
+     "q": "economia Cuba situacion actual",
+     "lang": "es",
+     "country": "CU"
+    },
+    {
+     "q": "Cuba news today",
+     "lang": "es",
+     "country": "CU"
+    },
+    {
+     "q": "Cuba crisis energia abastecimiento",
+     "lang": "es",
+     "country": "CU"
+    },
+    {
+     "q": "Cuba economia dolares inflacion",
+     "lang": "es",
+     "country": "CU"
+    },
+    {
+     "q": "Cuba sociedad politica noticias recientes",
+     "lang": "es",
+     "country": "CU"
+    },
+    {
+     "q": "Cuba emigracion diaspora",
+     "lang": "es",
+     "country": "CU"
+    },
+    {
+     "q": "Cuba sector privado empresas",
+     "lang": "es",
+     "country": "CU"
+    },
+    {
+     "q": "Cuba relaciones internacionales diplomacia",
+     "lang": "es",
+     "country": "CU"
+    }
+   ]
+  },
+  {
+   "id": "buenas-practicas-de-manufactura-gmp",
+   "name": "Buenas Prácticas de Manufactura (GMP)",
+   "short": "GMP",
+   "icon": "✅",
+   "color": [
+    "#bd8ae8",
+    "#5a1f8f"
+   ],
+   "feeds": [
+    "https://www.foodsafetynews.com/feed/",
+    "https://www.qualitymag.com/rss",
+    "https://www.foodqualityandsafety.com/feed/",
+    "https://www.manufacturing.net/home/rss",
+    "https://www.industryweek.com/rss/all",
+    "https://www.processingmagazine.com/home/rss",
+    "https://www.foodprocessing.com/rss/",
+    "https://www.automationworld.com/rss/all",
+    "https://www.foodnavigator.com/rss",
+    "https://www.fooddive.com/feeds/news/",
+    "https://www.mfgnewsweb.com/rss",
+    "https://www.foodbusinessnews.net/rss",
+    "https://www.foodsafetytech.com/feed/",
+    "https://www.foodsafetymagazine.com/rss/",
+    "https://www.compliancequest.com/blog/rss",
+    "https://www.fdanews.com/rss",
+    "https://www.nutraceuticalsworld.com/rss",
+    "https://www.efsa.europa.eu/en/news/rss",
+    "https://www.foodprotection.org/rss/",
+    "https://www.ifsqn.com/rss",
+    "https://www.bakingbusiness.com/rss/all",
+    "https://www.qualityprogress.com/rss",
+    "https://www.newfoodmagazine.com/rss",
+    "https://www.foodprocessingtechnology.com/rss/"
+   ],
+   "queries": [
+    {
+     "q": "good manufacturing practices food beverage GMP",
+     "lang": "en",
+     "country": "US"
+    },
+    {
+     "q": "manufacturing quality compliance news",
+     "lang": "en",
+     "country": "US"
+    },
+    {
+     "q": "food safety manufacturing standards",
+     "lang": "en",
+     "country": "US"
+    },
+    {
+     "q": "FDA GMP compliance enforcement action",
+     "lang": "en",
+     "country": "US"
+    },
+    {
+     "q": "ISO 22000 HACCP food manufacturing",
+     "lang": "en",
+     "country": "US"
+    },
+    {
+     "q": "manufacturing quality control inspection recall",
+     "lang": "en",
+     "country": "US"
+    },
+    {
+     "q": "FSMA food safety modernization act",
+     "lang": "en",
+     "country": "US"
+    },
+    {
+     "q": "EU food safety regulation manufacturing",
+     "lang": "en",
+     "country": "US"
+    },
+    {
+     "q": "quality management system manufacturing",
+     "lang": "en",
+     "country": "US"
+    },
+    {
+     "q": "food safety audit certification news",
+     "lang": "en",
+     "country": "US"
+    },
+    {
+     "q": "beverage recall contamination quality alert",
+     "lang": "en",
+     "country": "US"
+    },
+    {
+     "q": "GMP pharmaceutical food compliance update",
+     "lang": "en",
+     "country": "US"
+    },
+    {
+     "q": "BRCGS IFS SQF audit certification food",
+     "lang": "en",
+     "country": "US"
+    }
+   ]
+  },
+  {
+   "id": "envasado-de-bebidas",
+   "name": "Envasado de Bebidas",
+   "short": "Envasado",
+   "icon": "🍶",
+   "color": [
+    "#66b6e0",
+    "#0a5a86"
+   ],
+   "feeds": [
+    "https://www.packagingdigest.com/rss.xml",
+    "https://www.bevindustry.com/rss",
+    "https://www.packagingeurope.com/rss.xml",
+    "https://www.packworld.com/rss.xml",
+    "https://www.beveragedaily.com/rss/",
+    "https://www.foodprocessing.com/rss/",
+    "https://www.beverageworld.com/rss",
+    "https://www.drinkstechnology.com/rss",
+    "https://www.foodengineeringmag.com/rss",
+    "https://www.just-drinks.com/rss/",
+    "https://www.packagingnews.co.uk/rss",
+    "https://www.foodbusinessnews.net/rss",
+    "https://www.cantech-international.com/feed/",
+    "https://www.canmakermagazine.com/rss",
+    "https://www.newfoodmagazine.com/rss",
+    "https://www.processingmagazine.com/home/rss",
+    "https://www.drinksretailing.com/rss",
+    "https://www.automationworld.com/rss/all",
+    "https://www.foodprocessingtechnology.com/rss/",
+    "https://www.manufacturing.net/home/rss",
+    "https://www.drinksbusiness.com/feed/",
+    "https://www.beverages.co.uk/rss",
+    "https://www.fillingmachinery.com/rss",
+    "https://www.fooddive.com/feeds/news/"
+   ],
+   "queries": [
+    {
+     "q": "beverage packaging industry news 2025",
+     "lang": "en",
+     "country": "US"
+    },
+    {
+     "q": "can bottle filling packaging trends",
+     "lang": "en",
+     "country": "US"
+    },
+    {
+     "q": "beverage packaging technology innovation",
+     "lang": "en",
+     "country": "US"
+    },
+    {
+     "q": "beverage canning filling line automation",
+     "lang": "en",
+     "country": "US"
+    },
+    {
+     "q": "aseptic packaging beverage news",
+     "lang": "en",
+     "country": "US"
+    },
+    {
+     "q": "beverage can bottle cap closure news",
+     "lang": "en",
+     "country": "US"
+    },
+    {
+     "q": "packaging line efficiency OEE beverage",
+     "lang": "en",
+     "country": "US"
+    },
+    {
+     "q": "shrink sleeve label packaging innovation",
+     "lang": "en",
+     "country": "US"
+    },
+    {
+     "q": "beverage packaging sustainability lightweighting",
+     "lang": "en",
+     "country": "US"
+    },
+    {
+     "q": "beer canning line speed automation upgrade",
+     "lang": "en",
+     "country": "US"
+    },
+    {
+     "q": "beverage packaging digital printing innovation",
+     "lang": "en",
+     "country": "US"
+    },
+    {
+     "q": "aseptic cold fill hot fill technology beverage",
+     "lang": "en",
+     "country": "US"
+    },
+    {
+     "q": "packaging line changeover downtime reduction",
+     "lang": "en",
+     "country": "US"
+    },
+    {
+     "q": "smart packaging IoT sensor beverage",
+     "lang": "en",
+     "country": "US"
+    }
+   ]
+  },
+  {
+   "id": "produccion-de-alimentos-y-fmcg",
+   "name": "Producción de Alimentos y FMCG",
+   "short": "FMCG",
+   "icon": "🏭",
+   "color": [
+    "#e8a06a",
+    "#8a3a12"
+   ],
+   "feeds": [
+    "https://www.foodengineeringmag.com/rss",
+    "https://www.foodmanufacturing.com/rss/rss.xml",
+    "https://www.foodbusinessnews.net/rss",
+    "https://www.fooddive.com/feeds/news/",
+    "https://www.foodprocessing.com/rss/",
+    "https://www.foodnavigator.com/rss",
+    "https://www.beveragedaily.com/rss/",
+    "https://www.just-drinks.com/rss/",
+    "https://www.industryweek.com/rss/all",
+    "https://www.manufacturing.net/home/rss",
+    "https://www.foodproductiondaily.com/rss",
+    "https://www.globalconfectionery.com/feed/",
+    "https://www.dairyreporter.com/rss/",
+    "https://www.bakeryandsnacks.com/rss/",
+    "https://www.nutraingredients.com/rss",
+    "https://www.meatpoultry.com/rss/all",
+    "https://www.newfoodmagazine.com/rss",
+    "https://www.foodprocessingtechnology.com/rss/",
+    "https://www.automationworld.com/rss/all",
+    "https://www.consumergoods.com/feed/",
+    "https://www.progressivegrocer.com/rss/all",
+    "https://www.foodmanufacture.co.uk/rss/",
+    "https://www.processingmagazine.com/home/rss",
+    "https://www.foodintegrity.com/rss"
+   ],
+   "queries": [
+    {
+     "q": "food beverage production manufacturing news",
+     "lang": "en",
+     "country": "US"
+    },
+    {
+     "q": "FMCG industry trends 2025",
+     "lang": "en",
+     "country": "US"
+    },
+    {
+     "q": "food factory production efficiency",
+     "lang": "en",
+     "country": "US"
+    },
+    {
+     "q": "CPG consumer packaged goods industry news",
+     "lang": "en",
+     "country": "US"
+    },
+    {
+     "q": "food production automation robots technology",
+     "lang": "en",
+     "country": "US"
+    },
+    {
+     "q": "food manufacturing costs inflation raw materials",
+     "lang": "en",
+     "country": "US"
+    },
+    {
+     "q": "FMCG supply chain disruption news",
+     "lang": "en",
+     "country": "US"
+    },
+    {
+     "q": "food beverage factory expansion investment",
+     "lang": "en",
+     "country": "US"
+    },
+    {
+     "q": "food processing industry outlook 2025",
+     "lang": "en",
+     "country": "US"
+    },
+    {
+     "q": "FMCG brand portfolio rationalization",
+     "lang": "en",
+     "country": "US"
+    },
+    {
+     "q": "food production digitalization Industry 4.0",
+     "lang": "en",
+     "country": "US"
+    },
+    {
+     "q": "beverage factory capacity investment expansion",
+     "lang": "en",
+     "country": "US"
+    },
+    {
+     "q": "FMCG private label retail trends",
+     "lang": "en",
+     "country": "US"
+    },
+    {
+     "q": "food manufacturing mergers acquisitions 2025",
+     "lang": "en",
+     "country": "US"
+    }
+   ]
+  },
+  {
+   "id": "seguridad-y-salud-en-el-trabajo",
+   "name": "Seguridad y Salud en el Trabajo",
+   "short": "SST",
+   "icon": "🦺",
+   "color": [
+    "#e0ad63",
+    "#7a3a08"
+   ],
+   "feeds": [
+    "https://www.safetyandhealthmagazine.com/rss",
+    "https://ehsdailyadvisor.blr.com/feed/",
+    "https://www.ishn.com/rss/all",
+    "https://www.ehstoday.com/rss/all",
+    "https://www.ccohs.ca/rss/",
+    "https://www.hse.gov.uk/rss/",
+    "https://www.safetydailyadvisor.blr.com/feed/",
+    "https://www.nsc.org/rss",
+    "https://www.industryweek.com/rss/all",
+    "https://www.manufacturing.net/home/rss",
+    "https://www.foodsafetynews.com/feed/",
+    "https://www.osha.gov/news/newsreleases/archive/rss",
+    "https://safetyrisk.net/feed/",
+    "https://www.safeopedia.com/feed/",
+    "https://www.ohsonline.com/rss/all",
+    "https://www.iosh.com/news/rss",
+    "https://www.worksafemagazine.com/rss",
+    "https://www.hseblog.com/feed/",
+    "https://www.aiha.org/rss",
+    "https://www.assp.org/feed/",
+    "https://www.riskandinsurance.com/rss",
+    "https://www.workerscompensation.com/rss/",
+    "https://www.propertycasualty360.com/rss/all",
+    "https://www.osha.gov/news/rss"
+   ],
+   "queries": [
+    {
+     "q": "occupational health safety manufacturing news",
+     "lang": "en",
+     "country": "US"
+    },
+    {
+     "q": "workplace safety industrial accident prevention",
+     "lang": "en",
+     "country": "US"
+    },
+    {
+     "q": "OHS EHS compliance manufacturing 2025",
+     "lang": "en",
+     "country": "US"
+    },
+    {
+     "q": "seguridad salud trabajo industria noticias",
+     "lang": "en",
+     "country": "US"
+    },
+    {
+     "q": "OSHA compliance safety enforcement news",
+     "lang": "en",
+     "country": "US"
+    },
+    {
+     "q": "workplace injury accident manufacturing prevention",
+     "lang": "en",
+     "country": "US"
+    },
+    {
+     "q": "EU workplace safety directive regulation",
+     "lang": "en",
+     "country": "US"
+    },
+    {
+     "q": "ergonomics industrial safety workers",
+     "lang": "en",
+     "country": "US"
+    },
+    {
+     "q": "safety culture manufacturing incident near miss",
+     "lang": "en",
+     "country": "US"
+    },
+    {
+     "q": "workplace mental health wellbeing manufacturing",
+     "lang": "en",
+     "country": "US"
+    },
+    {
+     "q": "PPE personal protective equipment innovation",
+     "lang": "en",
+     "country": "US"
+    },
+    {
+     "q": "machine guarding safety automation robots",
+     "lang": "en",
+     "country": "US"
+    },
+    {
+     "q": "chemical hazard exposure industrial workplace",
+     "lang": "en",
+     "country": "US"
+    }
+   ]
+  },
+  {
+   "id": "lean-six-sigma-y-mejora-continua",
+   "name": "Lean Six Sigma y Mejora Continua",
+   "short": "Lean",
+   "icon": "📈",
+   "color": [
+    "#aebf5f",
+    "#3f4a08"
+   ],
+   "feeds": [
+    "https://www.isixsigma.com/feed/",
+    "https://www.industryweek.com/rss/all",
+    "https://www.manufacturing.net/home/rss",
+    "https://www.lean.org/feed",
+    "https://blog.kainexus.com/feed/",
+    "https://gembaacademy.com/blog/feed/",
+    "https://www.processingmagazine.com/home/rss",
+    "https://www.automationworld.com/rss/all",
+    "https://www.qualitymag.com/rss",
+    "https://www.qualityprogress.com/rss",
+    "https://www.foodprocessing.com/rss/",
+    "https://www.foodengineeringmag.com/rss",
+    "https://www.leanblog.org/feed/",
+    "https://www.leanproduction.com/feed/",
+    "https://www.processexcellencenetwork.com/rss",
+    "https://www.sixsigmaonline.org/feed/",
+    "https://www.targetmagazine.org/feed/",
+    "https://www.kaizen.com/blog/rss/",
+    "https://www.creativesafetysupply.com/blog/rss",
+    "https://www.theleanway.net/feed/",
+    "https://www.reliableplant.com/rss",
+    "https://www.plantservices.com/rss/all",
+    "https://www.sixsigma.com/feed/",
+    "https://themanufacturinginstitute.org/rss"
+   ],
+   "queries": [
+    {
+     "q": "lean six sigma manufacturing industry",
+     "lang": "en",
+     "country": "US"
+    },
+    {
+     "q": "continuous improvement kaizen operational excellence",
+     "lang": "en",
+     "country": "US"
+    },
+    {
+     "q": "OEE overall equipment effectiveness industry",
+     "lang": "en",
+     "country": "US"
+    },
+    {
+     "q": "lean manufacturing FMCG food beverage",
+     "lang": "en",
+     "country": "US"
+    },
+    {
+     "q": "kaizen continuous improvement factory case study",
+     "lang": "en",
+     "country": "US"
+    },
+    {
+     "q": "value stream mapping process improvement news",
+     "lang": "en",
+     "country": "US"
+    },
+    {
+     "q": "Toyota production system lean manufacturing",
+     "lang": "en",
+     "country": "US"
+    },
+    {
+     "q": "operational excellence manufacturing benchmark",
+     "lang": "en",
+     "country": "US"
+    },
+    {
+     "q": "DMAIC six sigma quality improvement",
+     "lang": "en",
+     "country": "US"
+    },
+    {
+     "q": "digital lean Industry 4.0 smart manufacturing",
+     "lang": "en",
+     "country": "US"
+    },
+    {
+     "q": "process improvement cost reduction ROI factory",
+     "lang": "en",
+     "country": "US"
+    },
+    {
+     "q": "lean six sigma beverage packaging industry case",
+     "lang": "en",
+     "country": "US"
+    },
+    {
+     "q": "agile manufacturing PDCA cycle improvement",
+     "lang": "en",
+     "country": "US"
+    }
+   ]
+  },
+  {
+   "id": "mantenimiento-industrial-y-tpm",
+   "name": "Mantenimiento Industrial y TPM",
+   "short": "Mantenim.",
+   "icon": "🔧",
+   "color": [
+    "#8b87e0",
+    "#2b2585"
+   ],
+   "feeds": [
+    "https://www.reliableplant.com/rss",
+    "https://www.maintenancetechnology.com/feed/",
+    "https://www.plantservices.com/rss/all",
+    "https://www.facilitiesnet.com/rss/all",
+    "https://www.machinedesign.com/rss/all",
+    "https://www.engineering.com/rss",
+    "https://www.industryweek.com/rss/all",
+    "https://www.automationworld.com/rss/all",
+    "https://www.manufacturing.net/home/rss",
+    "https://www.assetmanagementjournal.com/feed/",
+    "https://www.roadtoreliability.com/feed/",
+    "https://www.uptime.com/rss",
+    "https://www.reliabilityweb.com/rss",
+    "https://www.plant-engineering.com/rss/all",
+    "https://www.control-engineering.com/rss/all",
+    "https://www.maintenanceandengineering.com/feed/",
+    "https://www.maintenancecafe.com/feed/",
+    "https://www.processindustryforum.com/rss",
+    "https://www.maintenance.org/rss",
+    "https://www.smrp.org/rss",
+    "https://www.mt-online.com/rss",
+    "https://www.predictivemaintenancemagazine.com/rss",
+    "https://www.fleetmaintenance.com/rss/all",
+    "https://www.mro-network.com/rss"
+   ],
+   "queries": [
+    {
+     "q": "predictive maintenance industrial IoT sensors",
+     "lang": "en",
+     "country": "US"
+    },
+    {
+     "q": "total productive maintenance TPM factory",
+     "lang": "en",
+     "country": "US"
+    },
+    {
+     "q": "CMMS maintenance management software industry",
+     "lang": "en",
+     "country": "US"
+    },
+    {
+     "q": "industrial equipment reliability maintenance news",
+     "lang": "en",
+     "country": "US"
+    },
+    {
+     "q": "predictive maintenance machine learning AI factory",
+     "lang": "en",
+     "country": "US"
+    },
+    {
+     "q": "condition monitoring vibration analysis industry",
+     "lang": "en",
+     "country": "US"
+    },
+    {
+     "q": "asset management reliability engineering",
+     "lang": "en",
+     "country": "US"
+    },
+    {
+     "q": "preventive maintenance manufacturing best practices",
+     "lang": "en",
+     "country": "US"
+    },
+    {
+     "q": "maintenance 4.0 digital transformation factory",
+     "lang": "en",
+     "country": "US"
+    },
+    {
+     "q": "MTBF MTTR reliability KPI manufacturing plant",
+     "lang": "en",
+     "country": "US"
+    },
+    {
+     "q": "digital twin maintenance simulation plant",
+     "lang": "en",
+     "country": "US"
+    },
+    {
+     "q": "lubrication program reliability maintenance",
+     "lang": "en",
+     "country": "US"
+    },
+    {
+     "q": "spare parts inventory management MRO plant",
+     "lang": "en",
+     "country": "US"
+    }
+   ]
+  },
+  {
+   "id": "sostenibilidad-y-packaging-sostenible",
+   "name": "Sostenibilidad y Packaging Sostenible",
+   "short": "Sostenib.",
+   "icon": "♻️",
+   "color": [
+    "#5cbfb4",
+    "#0c534d"
+   ],
+   "feeds": [
+    "https://www.packagingeurope.com/rss.xml",
+    "https://www.sustainablebrands.com/rss.xml",
+    "https://www.greenbiz.com/rss.xml",
+    "https://www.packworld.com/rss.xml",
+    "https://www.circularonline.co.uk/feed/",
+    "https://www.edie.net/rss/",
+    "https://www.recyclingtoday.com/rss/all",
+    "https://www.bioplasticsmagazine.com/rss/",
+    "https://www.packagingdigest.com/rss.xml",
+    "https://www.european-bioplastics.org/news/feed/",
+    "https://www.packagingnews.co.uk/rss",
+    "https://www.foodpackagingforum.org/news/feed/",
+    "https://www.environmentalleader.com/feed/",
+    "https://resource.co/rss",
+    "https://www.letsrecycle.com/feed/",
+    "https://www.waste360.com/rss/all",
+    "https://www.treehugger.com/feeds/latest/",
+    "https://www.sustainability-times.com/feed/",
+    "https://www.recyclingproductnews.com/rss/",
+    "https://circulareconomy.europa.eu/platform/rss/news",
+    "https://www.wbcsd.org/rss",
+    "https://www.plasticsrecycling.org/feed/",
+    "https://www.epa.gov/rss/epa-news.xml",
+    "https://www.thepackhub.com/news/rss"
+   ],
+   "queries": [
+    {
+     "q": "sustainable packaging beverage industry 2025",
+     "lang": "en",
+     "country": "US"
+    },
+    {
+     "q": "circular economy packaging recycling news",
+     "lang": "en",
+     "country": "US"
+    },
+    {
+     "q": "EU packaging regulation sustainability directive",
+     "lang": "en",
+     "country": "US"
+    },
+    {
+     "q": "PET recycling rPET beverage packaging",
+     "lang": "en",
+     "country": "US"
+    },
+    {
+     "q": "plastic packaging ban regulation news",
+     "lang": "en",
+     "country": "US"
+    },
+    {
+     "q": "bioplastics compostable packaging market",
+     "lang": "en",
+     "country": "US"
+    },
+    {
+     "q": "EPR extended producer responsibility packaging",
+     "lang": "en",
+     "country": "US"
+    },
+    {
+     "q": "carbon footprint packaging manufacturing",
+     "lang": "en",
+     "country": "US"
+    },
+    {
+     "q": "packaging sustainability innovation brand news",
+     "lang": "en",
+     "country": "US"
+    },
+    {
+     "q": "EU PPWR packaging regulation compliance",
+     "lang": "en",
+     "country": "US"
+    },
+    {
+     "q": "plastic treaty global agreement news",
+     "lang": "en",
+     "country": "US"
+    },
+    {
+     "q": "packaging carbon neutral net zero commitment brand",
+     "lang": "en",
+     "country": "US"
+    },
+    {
+     "q": "recycled content packaging legislation target",
+     "lang": "en",
+     "country": "US"
+    }
+   ]
+  },
+  {
+   "id": "noticias-mexico",
+   "name": "Noticias México",
+   "short": "México",
+   "icon": "🇲🇽",
+   "color": [
+    "#e089b0",
+    "#7a1240"
+   ],
+   "feeds": [
+    "https://www.eluniversal.com.mx/rss.xml",
+    "https://www.elfinanciero.com.mx/rss/",
+    "https://expansion.mx/rss",
+    "https://www.eleconomista.com.mx/rss/portada.xml",
+    "https://www.forbes.com.mx/feed/",
+    "https://www.jornada.com.mx/rss/edicion.xml?v=1",
+    "https://aristeguinoticias.com/feed/",
+    "https://www.milenio.com/rss",
+    "https://www.dineroenimagen.com/rss.xml",
+    "https://www.proceso.com.mx/rss",
+    "https://feeds.bbci.co.uk/mundo/rss.xml",
+    "https://www.france24.com/es/rss",
+    "https://www.excelsior.com.mx/rss.xml",
+    "https://www.informador.mx/rss",
+    "https://www.capitalmexico.com.mx/rss/",
+    "https://www.am.com.mx/rss",
+    "https://www.animalpolitico.com/feed/",
+    "https://www.cronica.com.mx/rss",
+    "https://espanol.reuters.com/rss/topNews",
+    "https://www.businessinsider.mx/feed/",
+    "https://www.elsoldemxico.com.mx/rss/",
+    "https://www.24-horas.mx/rss/",
+    "https://www.imagen.com.mx/rss",
+    "https://www.nmas.com.mx/rss"
+   ],
+   "queries": [
+    {
+     "q": "Mexico noticias hoy",
+     "lang": "es",
+     "country": "MX"
+    },
+    {
+     "q": "economia mexicana actualidad",
+     "lang": "es",
+     "country": "MX"
+    },
+    {
+     "q": "Mexico empresas industria FMCG",
+     "lang": "es",
+     "country": "MX"
+    },
+    {
+     "q": "Mexico politica gobierno Sheinbaum",
+     "lang": "es",
+     "country": "MX"
+    },
+    {
+     "q": "Mexico negocios cervecera bebidas industria",
+     "lang": "es",
+     "country": "MX"
+    },
+    {
+     "q": "Mexico inflacion exportaciones comercio",
+     "lang": "es",
+     "country": "MX"
+    },
+    {
+     "q": "Mexico inversion industrial manufactura",
+     "lang": "es",
+     "country": "MX"
+    },
+    {
+     "q": "Mexico nearshoring industria 2025",
+     "lang": "es",
+     "country": "MX"
+    },
+    {
+     "q": "Mexico banco de mexico tipo cambio peso",
+     "lang": "es",
+     "country": "MX"
+    },
+    {
+     "q": "Mexico cerveza modelo corona grupo modelo",
+     "lang": "es",
+     "country": "MX"
+    },
+    {
+     "q": "industria manufacturera Mexico produccion",
+     "lang": "es",
+     "country": "MX"
+    }
+   ]
+  },
+  {
+   "id": "marketing-y-branding",
+   "name": "Marketing y Branding",
+   "short": "Marketing",
+   "icon": "📣",
+   "color": [
+    "#d0905f",
+    "#6a2a15"
+   ],
+   "feeds": [
+    "https://www.marketingweek.com/feed/",
+    "https://www.marketingdive.com/feeds/news/",
+    "https://www.adweek.com/feed/",
+    "https://adage.com/feeds/publish/all.xml",
+    "https://www.thedrum.com/rss.xml",
+    "https://www.warc.com/feed.xml",
+    "https://www.brandingmag.com/feed/",
+    "https://www.contentmarketinginstitute.com/feed/",
+    "https://www.fastcompany.com/section/co-design/rss",
+    "https://www.marketingprofs.com/rss/topic.xml",
+    "https://www.campaignlive.com/rss/news",
+    "https://www.marketingsherpa.com/rss",
+    "https://www.searchengineland.com/feed",
+    "https://www.hubspot.com/blog/marketing/rss.xml",
+    "https://www.convinceandconvert.com/feed/",
+    "https://www.marketinginsidergroup.com/feed/",
+    "https://sproutsocial.com/insights/rss/",
+    "https://neilpatel.com/blog/feed/",
+    "https://www.socialmediaexaminer.com/feed/",
+    "https://www.brandingstrategyinsider.com/feed/",
+    "https://www.ama.org/marketing-news/rss/",
+    "https://www.emarketer.com/rss",
+    "https://www.forbes.com/marketing/feed/",
+    "https://feeds.copyblogger.com/Copyblogger"
+   ],
+   "queries": [
+    {
+     "q": "marketing digital trends 2025",
+     "lang": "en",
+     "country": "US"
+    },
+    {
+     "q": "brand strategy consumer goods FMCG",
+     "lang": "en",
+     "country": "US"
+    },
+    {
+     "q": "advertising campaign innovation news",
+     "lang": "en",
+     "country": "US"
+    },
+    {
+     "q": "consumer behavior insights marketing",
+     "lang": "en",
+     "country": "US"
+    },
+    {
+     "q": "neuromarketing consumer psychology",
+     "lang": "en",
+     "country": "US"
+    },
+    {
+     "q": "social media marketing brand strategy",
+     "lang": "en",
+     "country": "US"
+    },
+    {
+     "q": "marketing FMCG beverage brands case study",
+     "lang": "en",
+     "country": "US"
+    },
+    {
+     "q": "marketing tendencias espanol noticias",
+     "lang": "en",
+     "country": "US"
+    },
+    {
+     "q": "branding case study CPG industry",
+     "lang": "en",
+     "country": "US"
+    },
+    {
+     "q": "marketing analytics measurement ROI",
+     "lang": "en",
+     "country": "US"
+    },
+    {
+     "q": "influencer marketing food beverage brand",
+     "lang": "en",
+     "country": "US"
+    },
+    {
+     "q": "beer brand campaign social media viral",
+     "lang": "en",
+     "country": "US"
+    },
+    {
+     "q": "FMCG consumer packaging design trends",
+     "lang": "en",
+     "country": "US"
+    },
+    {
+     "q": "retail marketing shopper insights 2025",
+     "lang": "en",
+     "country": "US"
+    }
+   ]
+  }
+ ]
+}

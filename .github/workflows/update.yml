@@ -1,0 +1,66 @@
+name: Actualizar noticias
+
+# Lee las fuentes de topics.json, agrupa las noticias y publica la app en
+# GitHub Pages. Se ejecuta:
+#   • cada 2 horas (de 05:00 a 23:00 en Cuba; ajusta los horarios a tu zona),
+#   • cuando cambia topics.json (al añadir o borrar un tema desde la app),
+#   • a mano desde la pestaña Actions («Run workflow»).
+#
+# Requisito: Settings → Pages → Source = «GitHub Actions».
+# Variable opcional: Settings → Secrets and variables → Actions → Variables →
+#   NOW_API_URL = URL de tu función de Supabase (rellena los ajustes de la app).
+
+on:
+  schedule:
+    - cron: '0 9,11,13,15,17,19,21,23 * * *'   # UTC
+    - cron: '0 1,3 * * *'
+  push:
+    branches: [main]
+    paths: ['topics.json', 'now_config.json', 'build.py', 'site/**']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: now-pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - id: pages
+        uses: actions/configure-pages@v5
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - run: pip install -r requirements.txt
+
+      - name: Construir las noticias
+        env:
+          NOW_SITE_URL: ${{ steps.pages.outputs.base_url }}
+          NOW_API_URL: ${{ vars.NOW_API_URL }}
+        run: python build.py
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
