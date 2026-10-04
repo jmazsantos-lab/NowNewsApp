@@ -2,8 +2,8 @@
 // - La app (HTML, iconos) se sirve desde caché y se actualiza en segundo plano.
 // - Las noticias (data/*.json) se piden siempre a la red; si no hay conexión
 //   se muestra la última versión guardada.
-const SHELL_CACHE = "now-shell-v2";
-const DATA_CACHE = "now-data-v2";
+const SHELL_CACHE = "now-shell-v3";
+const DATA_CACHE = "now-data-v3";
 const SHELL = ["./", "./index.html", "./manifest.webmanifest", "./icon.svg", "./icon-192.png", "./apple-touch-icon.png"];
 
 self.addEventListener("install", event => {
@@ -44,4 +44,29 @@ self.addEventListener("fetch", event => {
       }))
     );
   }
+});
+
+// ─── Notificaciones push ────────────────────────────────────────────────────
+// El servidor (build.py, vía GitHub Actions) envía {title, body, url, tag}.
+self.addEventListener("push", event => {
+  let m = {};
+  try { m = event.data ? event.data.json() : {}; } catch (e) { m = { body: event.data ? event.data.text() : "" }; }
+  event.waitUntil(self.registration.showNotification(m.title || "Now", {
+    body: m.body || "", tag: m.tag || "now", icon: "icon-192.png", badge: "icon-192.png",
+    data: { url: m.url || "./" }, renotify: false,
+  }));
+});
+
+self.addEventListener("notificationclick", event => {
+  event.notification.close();
+  const target = new URL((event.notification.data && event.notification.data.url) || "./", self.registration.scope).href;
+  event.waitUntil(self.clients.matchAll({ type: "window", includeUncontrolled: true }).then(list => {
+    for (const c of list) {
+      if (c.url.startsWith(self.registration.scope)) {
+        c.postMessage({ type: "open", hash: new URL(target).hash });
+        return c.focus();
+      }
+    }
+    return self.clients.openWindow(target);
+  }));
 });

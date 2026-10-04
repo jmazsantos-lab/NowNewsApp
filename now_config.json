@@ -7,6 +7,9 @@
   "match_window_days": 7,
   "cluster_threshold": 0.28,
   "max_article_age_hours": 96,
+  "notify_threshold": 75,
+  "notify_max_per_run": 3,
+  "notify_max_age_hours": 36,
   "authority_sources": [
     "reuters",
     "bloomberg",

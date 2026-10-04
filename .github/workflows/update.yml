@@ -9,6 +9,8 @@ name: Actualizar noticias
 # Requisito: Settings → Pages → Source = «GitHub Actions».
 # Variable opcional: Settings → Secrets and variables → Actions → Variables →
 #   NOW_API_URL = URL de tu función de Supabase (rellena los ajustes de la app).
+# Las variables NOW_PUSH_KEYS y NOW_PUSH_SUBS (notificaciones) las crea sola la
+# función de Supabase cuando activas las notificaciones desde la app.
 
 on:
   schedule:
@@ -18,6 +20,11 @@ on:
     branches: [main]
     paths: ['topics.json', 'now_config.json', 'build.py', 'site/**']
   workflow_dispatch:
+    inputs:
+      push_test:
+        description: 'Enviar una notificación de prueba a los dispositivos suscritos'
+        type: boolean
+        default: false
 
 permissions:
   contents: read
@@ -49,6 +56,9 @@ jobs:
         env:
           NOW_SITE_URL: ${{ steps.pages.outputs.base_url }}
           NOW_API_URL: ${{ vars.NOW_API_URL }}
+          NOW_PUSH_KEYS: ${{ vars.NOW_PUSH_KEYS }}
+          NOW_PUSH_SUBS: ${{ vars.NOW_PUSH_SUBS }}
+          NOW_PUSH_TEST: ${{ inputs.push_test && '1' || '' }}
         run: python build.py
 
       - uses: actions/upload-pages-artifact@v3

@@ -1,13 +1,15 @@
 // Now · función de servidor (Supabase Edge Function, sin base de datos)
 //
-//   POST …/now/topics   Ajustes de la app: buscar fuentes con IA, añadir y borrar temas.
+//   POST …/now/topics   Ajustes de la app: buscar fuentes con IA, añadir y borrar temas
+//                       y registrar dispositivos para las notificaciones.
 //                       Requiere la clave de administración (NOW_ADMIN_KEY).
 //   POST …/now/mcp      Conector MCP para Claude (solo lectura de noticias).
 //
 // Secrets (Supabase → Edge Functions → Secrets):
 //   NOW_SITE_URL       URL pública de la app, p. ej. https://usuario.github.io/now   (obligatorio)
 //   NOW_GITHUB_REPO    Repositorio con topics.json, p. ej. usuario/now                (para los ajustes)
-//   NOW_GITHUB_TOKEN   Token de GitHub con Contents: Read and write en ese repositorio
+//   NOW_GITHUB_TOKEN   Token de GitHub con Contents: Read and write y Variables: Read and write
+//                      en ese repositorio (Variables se usa para las notificaciones)
 //   NOW_ADMIN_KEY      Clave que pedirá la app para cambiar temas (elígela tú)
 //   ANTHROPIC_API_KEY  Clave de la API de Claude (para buscar fuentes)
 //   NOW_TIMEZONE       Opcional. Zona horaria de las fechas. Por defecto America/Havana
@@ -94,6 +96,43 @@ async function writeTopics(topics: Topic[], sha: string, message: string): Promi
   });
   if (res.status === 409) throw new Error("Otro cambio se guardó a la vez. Vuelve a intentarlo.");
   if (!res.ok) throw new Error(`GitHub no aceptó el cambio (${res.status}). El token necesita «Contents: Read and write».`);
+}
+
+// ─── Notificaciones push ────────────────────────────────────────────────────
+// Los dispositivos suscritos y las claves VAPID viven en variables del repositorio
+// (NOW_PUSH_SUBS, NOW_PUSH_KEYS); el workflow las lee y envía los avisos.
+const VAR_KEYS = "NOW_PUSH_KEYS", VAR_SUBS = "NOW_PUSH_SUBS", MAX_DEVICES = 20;
+const u64 = (b: ArrayBuffer | Uint8Array) => btoa(String.fromCharCode(...new Uint8Array(b))).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+const fromU64 = (t: string) => Uint8Array.from(atob(t.replace(/-/g, "+").replace(/_/g, "/").padEnd(Math.ceil(t.length / 4) * 4, "=")), c => c.charCodeAt(0));
+const VARS = () => `${GH_API}/repos/${REPO}/actions/variables`;
+const NEEDS_VARS = "El token de GitHub necesita el permiso «Variables: Read and write» sobre el repositorio.";
+
+async function getVar(name: string): Promise<string | null> {
+  const res = await fetch(`${VARS()}/${name}`, { headers: ghHeaders() });
+  if (res.status === 404) return null;
+  if (!res.ok) throw new Error(`No se pudo leer la variable ${name} (${res.status}). ${NEEDS_VARS}`);
+  return String((await res.json()).value ?? "");
+}
+async function setVar(name: string, value: string): Promise<void> {
+  const h = { ...ghHeaders(), "Content-Type": "application/json" };
+  let res = await fetch(`${VARS()}/${name}`, { method: "PATCH", headers: h, body: JSON.stringify({ name, value }) });
+  if (res.status === 404) res = await fetch(VARS(), { method: "POST", headers: h, body: JSON.stringify({ name, value }) });
+  if (!res.ok) throw new Error(`No se pudo guardar la variable ${name} (${res.status}). ${NEEDS_VARS}`);
+}
+async function pushKeys(): Promise<{ pub: string; priv: string }> {
+  const cur = await getVar(VAR_KEYS);
+  if (cur) { try { const k = JSON.parse(cur); if (k.pub && k.priv) return k; } catch { /* se vuelve a crear */ } }
+  const kp = await crypto.subtle.generateKey({ name: "ECDSA", namedCurve: "P-256" }, true, ["sign", "verify"]);
+  const jwk = await crypto.subtle.exportKey("jwk", kp.privateKey);
+  const raw = new Uint8Array(65); raw[0] = 4; raw.set(fromU64(jwk.x!), 1); raw.set(fromU64(jwk.y!), 33);
+  const keys = { pub: u64(raw), priv: jwk.d! };
+  await setVar(VAR_KEYS, JSON.stringify(keys));
+  await setVar(VAR_SUBS, "[]").catch(() => {});
+  return keys;
+}
+type Device = { endpoint: string; keys: { p256dh: string; auth: string }; label: string; at: number };
+async function getDevices(): Promise<Device[]> {
+  try { const v = JSON.parse((await getVar(VAR_SUBS)) || "[]"); return Array.isArray(v) ? v : []; } catch { return []; }
 }
 
 const summary = (t: Topic) => ({ id: t.id, name: t.name, short: t.short, icon: t.icon, color: t.color, sources: t.feeds.length, queries: t.queries.length });
@@ -292,6 +331,25 @@ async function topicsApi(req: Request): Promise<Response> {
         await writeTopics(rest, sha, `Borrar tema: ${t.name}`);
         return json({ ok: true, topics: rest.map(summary) });
       }
+      case "push_key": {
+        const k = await pushKeys();
+        return json({ ok: true, publicKey: k.pub, devices: (await getDevices()).length });
+      }
+      case "push_subscribe": {
+        const sub = body.subscription ?? {};
+        if (!/^https?:\/\//.test(String(sub.endpoint ?? "")) || !sub.keys?.p256dh || !sub.keys?.auth) return json({ error: "La suscripción no es válida." }, 400);
+        await pushKeys();
+        const list = (await getDevices()).filter(d => d.endpoint !== sub.endpoint);
+        list.push({ endpoint: String(sub.endpoint), keys: { p256dh: String(sub.keys.p256dh), auth: String(sub.keys.auth) }, label: String(body.label ?? "").slice(0, 30), at: Date.now() });
+        const kept = list.slice(-MAX_DEVICES);
+        await setVar(VAR_SUBS, JSON.stringify(kept));
+        return json({ ok: true, devices: kept.length });
+      }
+      case "push_unsubscribe": {
+        const list = (await getDevices()).filter(d => d.endpoint !== body.endpoint);
+        await setVar(VAR_SUBS, JSON.stringify(list));
+        return json({ ok: true, devices: list.length });
+      }
       default:
         return json({ error: "Acción no reconocida." }, 400);
     }
@@ -305,7 +363,7 @@ async function topicsApi(req: Request): Promise<Response> {
 // ════════════════════════════════════════════════════════════════════════════
 
 type Article = { src: string; t: number; url: string };
-type Story = { id: string; c: string; t: string; lang: string; aff: number; img: string; a: [string, number, string][]; arts?: Article[] };
+type Story = { id: string; c: string; t: string; sm?: string; lang: string; aff: number; img: string; a: [string, number, string][]; arts?: Article[] };
 type Category = { id: string; name: string; short?: string; icon: string };
 type Data = { updated: number; categories: Category[]; authority: string[]; stories: Story[] };
 
@@ -399,7 +457,7 @@ const TOOLS = [
       seccion: { type: "string", description: "Identificador, nombre o nombre corto de la sección. Vacío = todas." },
       ...periodProps,
       limite: { type: "integer", minimum: 1, maximum: 50, description: "Número de noticias. Por defecto 10." } } } },
-  { name: "noticia", description: "Detalle de una noticia: índice y su desglose, medios que la publicaron con fecha y enlace, e imagen.",
+  { name: "noticia", description: "Detalle de una noticia: resumen breve, índice y su desglose, medios que la publicaron con fecha y enlace, e imagen.",
     inputSchema: { type: "object", required: ["id"], properties: { id: { type: "string", description: "Identificador devuelto por noticias, buscar o resumen." } } } },
   { name: "buscar", description: "Busca noticias cuyo titular contenga un texto (sin distinguir mayúsculas ni acentos), ordenadas por importancia.",
     inputSchema: { type: "object", required: ["texto"], properties: {
@@ -453,7 +511,7 @@ async function callTool(name: string, args: Record<string, unknown>): Promise<un
         const pos = rows.findIndex(r => r.s.id === id);
         const r = rows[pos];
         return {
-          id, titular: s.t, seccion: catName(d, s.c), idioma: s.lang, imagen: s.img || null,
+          id, titular: s.t, resumen: s.sm || null, seccion: catName(d, s.c), idioma: s.lang, imagen: s.img || null,
           indice: r?.idx ?? null, posicion_en_30_dias: pos >= 0 ? pos + 1 : null,
           desglose: r ? { cobertura_medios: r.names.length, velocidad_24h: `${Math.round(r.vel * 100)} %`, diversidad: Math.round(r.div * 100), frescura: Math.round(r.fresh * 100), afinidad: Math.round(r.afi * 100) } : null,
           fuentes: (s.arts ?? []).map(x => ({ medio: x.src, fecha: fmt(x.t), enlace: x.url || null })),

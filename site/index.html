@@ -16,7 +16,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Literata:opsz,wght@7..72,500;7..72,650;7..72,750&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@500;600&display=swap">
-<style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0}img{max-width:100%}</style>
+<style>:root{padding-bottom:env(safe-area-inset-bottom,0px)}html{background:var(--paper,#f6f2e9)}body{margin:0}img{max-width:100%}</style>
 <style>
 /* Layout: app de noticias visual, móvil primero. Burbujas de secciones, noticia principal a sangre y rejilla de tarjetas-póster con medidor de importancia. Cada sección tiene su color (paleta del email del News Digest). */
 :root{
@@ -71,7 +71,8 @@ a{color:inherit}
 @media (prefers-reduced-motion:reduce){.splash{display:none}.top .logo .sweep{animation:none}}
 
 /* ---------- Cabecera ---------- */
-.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--paper);border-bottom:1px solid var(--hair)}
+/* La cabecera se pega al borde real de la pantalla y ocupa la zona segura (muesca / barra de estado): así no se ven noticias por encima */
+.top{position:sticky;top:0;z-index:5;background:var(--paper);border-bottom:1px solid var(--hair);padding-top:env(safe-area-inset-top,0px)}
 .wrap{max-width:1160px;margin:0 auto;padding-inline:16px}
 .bar{display:flex;align-items:center;gap:10px;padding-block:10px 8px}
 .brand{display:flex;align-items:center;gap:8px;font:750 26px/1 var(--f-display);letter-spacing:-.02em}
@@ -166,6 +167,7 @@ a{color:inherit}
 .score .big text{fill:var(--ink);font:600 24px var(--f-mono);text-anchor:middle;dominant-baseline:central}
 .score .lab{font-size:11px;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);font-weight:600}
 .score .rk{font:650 20px/1.2 var(--f-display);margin:2px 0 8px}
+.sum{margin:-4px 0 0;font:400 15.5px/1.55 var(--f-display);color:var(--ink-2);text-wrap:pretty;border-left:3px solid var(--c1);padding-left:12px}
 .facts{display:flex;gap:6px;flex-wrap:wrap}
 .facts span{display:inline-flex;align-items:center;gap:5px;background:var(--bar-bg);border-radius:99px;padding:3px 10px;font-size:12px;color:var(--ink-2)}
 .arts{display:flex;flex-direction:column;gap:8px}
@@ -178,7 +180,7 @@ a{color:inherit}
 
 .status{font-size:11.5px;color:var(--muted);padding-bottom:6px;margin-top:-4px}
 .brand{cursor:pointer}
-#ptr{position:fixed;left:50%;top:calc(env(safe-area-inset-top,0px) + 8px);z-index:30;width:40px;height:40px;transform:translate(-50%,-60px);transition:transform .2s ease;pointer-events:none;filter:drop-shadow(0 2px 6px rgba(0,0,0,.25))}
+#ptr{--hide:calc(-1 * (env(safe-area-inset-top,0px) + 60px));position:fixed;left:50%;top:calc(env(safe-area-inset-top,0px) + 8px);z-index:30;width:40px;height:40px;transform:translate(-50%,var(--hide));transition:transform .2s ease;pointer-events:none;filter:drop-shadow(0 2px 6px rgba(0,0,0,.25))}
 #ptr.ready{filter:drop-shadow(0 0 0 2px #f0b64f) drop-shadow(0 2px 6px rgba(0,0,0,.25))}
 #ptr.spin{transform:translate(-50%,10px);animation:ptrspin .8s linear infinite}
 @keyframes ptrspin{to{transform:translate(-50%,10px) rotate(360deg)}}
@@ -342,6 +344,7 @@ const MONO = ["#2f6fb0","#8a4fc4","#1f9e8f","#3c6f38","#c2410c","#a5670f","#be18
 const H = 3600e3, D = 24*H;
 
 let DATA = null, ARCHIVE = null, CATS = [], CAT = {}, AUTH = [], ROWS = [];
+let PENDING_HASH = location.hash;       // #s=<id>: llega al tocar una notificación
 const S = { period: "7", cat: "all", from: null, to: null };
 try { const s = JSON.parse(localStorage.getItem("now") || "{}"); if (s.period) S.period = s.period; if (s.cat) S.cat = s.cat; } catch(e) {}
 const save = () => { try { localStorage.setItem("now", JSON.stringify({ period: S.period, cat: S.cat })); } catch(e) {} };
@@ -392,6 +395,7 @@ async function load(force) {
     if (force) ARCHIVE = null;
     if (needsArchive()) ARCHIVE = adopt(await getJSON("archive.json"));
     render(); setStatus();
+    if (PENDING_HASH) { const h = PENDING_HASH; PENDING_HASH = ""; openFromHash(h); }
   } catch (e) {
     if (DATA) { setStatus(); return; }
     $("#main").innerHTML = `<p class="empty">No se pudieron cargar las noticias. Revisa la conexión y desliza hacia abajo para reintentar.</p>`;
@@ -498,6 +502,7 @@ function openSheet(id) {
     </div>
     <div class="in">
       <h2 id="shTitle" style="font:650 22px/1.25 var(--f-display);margin:0;text-wrap:balance">${esc(r.s.t)}</h2>
+      ${r.s.sm ? `<p class="sum" style="${vars(c)}">${esc(r.s.sm)}</p>` : ""}
       <div class="score">${gauge(r.idx, "big", 84, 8)}<div>
         <div class="lab">Índice de importancia</div>
         <div class="rk">nº ${pos} de ${ROWS.length} en el periodo</div>
@@ -510,6 +515,15 @@ function openSheet(id) {
   $("#sheet").hidden = false; $("#closeSheet").focus();
 }
 const closeSheet = () => { $("#sheet").hidden = true; };
+function openFromHash(h) {
+  const m = /^#s=([0-9a-f]+)$/.exec(h || ""); if (!m) return;
+  try { history.replaceState(null, "", location.pathname + location.search); } catch (e) {}
+  if (!ROWS.some(x => x.s.id === m[1])) { S.period = "7"; S.cat = "all"; render(); }
+  if (ROWS.some(x => x.s.id === m[1])) { closeSettings(); openSheet(m[1]); }
+}
+if ("serviceWorker" in navigator) navigator.serviceWorker.addEventListener("message", e => {
+  if (e.data && e.data.type === "open") { PENDING_HASH = e.data.hash || ""; load(true); }
+});
 
 // ─── Eventos ────────────────────────────────────────────────────────────────
 async function setPeriod(p) {
@@ -548,7 +562,7 @@ if (S.period === "custom") { S.from = iso(Date.now() - 14*D); S.to = iso(Date.no
   addEventListener("touchmove", e => {
     if (y0 === null) return;
     dy = Math.max(0, e.touches[0].clientY - y0);
-    ptr.style.transform = `translate(-50%, ${Math.min(dy, 110) - 60}px) rotate(${dy*3}deg)`;
+    ptr.style.transform = `translate(-50%, calc(var(--hide) + ${Math.min(dy, 110)}px)) rotate(${dy*3}deg)`;
     ptr.classList.toggle("ready", dy > 80);
   }, { passive: true });
   addEventListener("touchend", () => {
@@ -610,9 +624,61 @@ const ICON_GEAR = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" st
 const ICON_TRASH = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6M10 11v6M14 11v6"/></svg>`;
 const RADAR = `<svg viewBox="0 0 64 64" aria-hidden="true"><circle cx="32" cy="32" r="31" fill="#17232d"></circle><circle cx="32" cy="32" r="21" fill="none" stroke="rgba(255,255,255,.14)" stroke-width="1.2"></circle><circle cx="32" cy="32" r="11" fill="none" stroke="rgba(255,255,255,.14)" stroke-width="1.2"></circle><g class="sweep"><path d="M32 32 L32 4 A28 28 0 0 1 56.2 18 Z" fill="url(#sw)"></path><line x1="32" y1="32" x2="56.2" y2="18" stroke="#f0b64f" stroke-width="2" stroke-linecap="round"></line></g><circle cx="45" cy="23" r="5" fill="#f0b64f"></circle><circle cx="21" cy="40" r="3.4" fill="#f0b64f"></circle></svg>`;
 
+const PUSH = { active: false, perm: "default", busy: false, msg: "", err: "" };
+const pushSupported = () => "serviceWorker" in navigator && "PushManager" in window && "Notification" in window;
+const needsInstall = () => /iphone|ipad|ipod/i.test(navigator.userAgent) && !(navigator.standalone || matchMedia("(display-mode: standalone)").matches);
+const b64u = t => Uint8Array.from(atob(t.replace(/-/g, "+").replace(/_/g, "/").padEnd(Math.ceil(t.length/4)*4, "=")), c => c.charCodeAt(0));
+const deviceName = () => /iphone/i.test(navigator.userAgent) ? "iPhone" : /ipad/i.test(navigator.userAgent) ? "iPad" : /android/i.test(navigator.userAgent) ? "Android" : "Ordenador";
+async function refreshPush() {
+  if (!pushSupported()) return;
+  PUSH.perm = Notification.permission;
+  try { const reg = await navigator.serviceWorker.ready; PUSH.active = !!(await reg.pushManager.getSubscription()) && PUSH.perm === "granted"; } catch (e) { PUSH.active = false; }
+  renderSettings();
+}
+async function enablePush() {
+  PUSH.busy = true; PUSH.err = ""; PUSH.msg = ""; renderSettings();
+  try {
+    const perm = await Notification.requestPermission();            // debe ir justo tras el toque
+    PUSH.perm = perm;
+    if (perm !== "granted") throw new Error("Permiso denegado. Actívalo en Ajustes del dispositivo → Notificaciones → Now.");
+    const { publicKey } = await api("push_key", {}, 30000);
+    const reg = await navigator.serviceWorker.ready;
+    const old = await reg.pushManager.getSubscription(); if (old) await old.unsubscribe();
+    const sub = await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: b64u(publicKey) });
+    await api("push_subscribe", { subscription: sub.toJSON(), label: deviceName() }, 30000);
+    PUSH.active = true; PUSH.msg = "Notificaciones activadas en este dispositivo.";
+    reg.showNotification("Now", { body: `Listo. Te aviso cuando haya una noticia con importancia de ${THR()} o más.`, icon: "icon-192.png", tag: "now-on" });
+  } catch (e) { PUSH.err = e.message; }
+  finally { PUSH.busy = false; renderSettings(); }
+}
+async function disablePush() {
+  PUSH.busy = true; PUSH.err = ""; PUSH.msg = ""; renderSettings();
+  try {
+    const reg = await navigator.serviceWorker.ready, sub = await reg.pushManager.getSubscription();
+    if (sub) { const ep = sub.endpoint; await sub.unsubscribe(); try { await api("push_unsubscribe", { endpoint: ep }, 30000); } catch (e) {} }
+    PUSH.active = false; PUSH.msg = "Notificaciones desactivadas en este dispositivo.";
+  } catch (e) { PUSH.err = e.message; }
+  finally { PUSH.busy = false; renderSettings(); }
+}
+const THR = () => (DATA && DATA.notify_threshold) || 75;
+function notifSection(ready) {
+  const sup = pushSupported(), ins = needsInstall();
+  const pill = !sup ? `<span class="pill warn">No disponible</span>` : PUSH.active ? `<span class="pill ok">Activadas</span>` : `<span class="pill">Desactivadas</span>`;
+  let body;
+  if (!sup) body = `<p class="hint">${ins ? "En iPhone y iPad las notificaciones solo funcionan con Now instalada: pulsa Compartir → «Añadir a pantalla de inicio» y ábrela desde el icono." : "Este navegador no admite notificaciones push."}</p>`;
+  else body = `<p class="hint">Te aviso cuando aparezca una noticia con un índice de importancia de <b>${THR()}</b> o más. Se comprueba cada 2 horas y recibirás como máximo 3 avisos cada vez.</p>
+    <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">${PUSH.active
+      ? `<button class="btn ghost" data-cfg="push-off" ${PUSH.busy ? "disabled" : ""}>Desactivar en este dispositivo</button>`
+      : `<button class="btn amber" data-cfg="push-on" ${PUSH.busy || !ready ? "disabled" : ""}>${PUSH.busy ? "Activando…" : "🔔 Activar notificaciones"}</button>`}</div>
+    ${!ready && !PUSH.active ? `<p class="hint">Configura antes la conexión (más abajo): hace falta para registrar este dispositivo.</p>` : ""}
+    ${PUSH.perm === "denied" ? `<p class="err">Las notificaciones están bloqueadas para Now en este dispositivo. Actívalas en los ajustes del sistema.</p>` : ""}
+    ${PUSH.err ? `<p class="err">${esc(PUSH.err)}</p>` : PUSH.msg ? `<p class="hint">✅ ${esc(PUSH.msg)}</p>` : ""}`;
+  return `<section><h3>🔔 Notificaciones ${pill}</h3>${body}</section>`;
+}
+
 const CFG = { open: false, ask: null, busy: false, step: 0, prop: null, error: "", connMsg: "", connOk: null };
 
-function openSettings() { CFG.open = true; CFG.error = ""; renderSettings(); $("#settings").hidden = false; }
+function openSettings() { CFG.open = true; CFG.error = ""; PUSH.msg = PUSH.err = ""; renderSettings(); $("#settings").hidden = false; refreshPush(); }
 function closeSettings() { if (CFG.busy) return; CFG.open = false; CFG.ask = null; $("#settings").hidden = true; }
 
 function renderSettings() {
@@ -656,6 +722,7 @@ function renderSettings() {
     <section><h3>✨ Añadir un tema</h3>${add}</section>
     <section><h3>Tus temas <span class="pill">${cats.length}</span></h3><div class="tlist">${rows}</div>
       <p class="hint">Los cambios se aplican en unos minutos y los ven todas las personas que usan esta instalación de Now.</p></section>
+    ${notifSection(ready)}
     <section><details ${ready ? "" : "open"}><summary><h3>🔌 Conexión <span class="pill ${ready ? (CFG.connOk === false ? "warn" : "ok") : "warn"}">${ready ? (CFG.connOk === false ? "Revisar" : "Configurada") : "Sin configurar"}</span></h3></summary>
       <form class="conn" id="connForm">
         <label for="cUrl">URL de la función</label><input type="url" id="cUrl" value="${esc(c.url)}" placeholder="https://xxxx.supabase.co/functions/v1/now" autocomplete="off">
@@ -735,6 +802,8 @@ document.addEventListener("click", e => {
   else if (a === "del-yes") deleteTopic(b.dataset.id);
   else if (a === "cancel") { CFG.prop = null; CFG.error = ""; renderSettings(); }
   else if (a === "add") addTopic();
+  else if (a === "push-on") enablePush();
+  else if (a === "push-off") disablePush();
 });
 document.addEventListener("change", e => {
   const i = e.target.dataset?.src;

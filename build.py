@@ -11,16 +11,22 @@ En cada ejecución:
      parecido en los últimos días) o crea una historia nueva.
   4. Poda: borra lo que tiene más de 30 días, lo de temas eliminados y se
      queda con las historias más cubiertas de cada tema y día.
-  5. Escribe site/data/latest.json (7 días) y site/data/archive.json (30 días).
+  5. Calcula el índice de importancia de cada historia y envía una notificación
+     push de las que superan el umbral (75) y no se habían avisado antes.
+  6. Escribe site/data/latest.json (7 días) y site/data/archive.json (30 días).
 
 Variables de entorno:
   NOW_SITE_URL      URL pública de la app (la pone el workflow automáticamente)
   NOW_API_URL       URL de la función de Supabase (opcional, para los ajustes)
   NOW_SKIP_DOWNLOAD =1 para empezar sin histórico (pruebas)
+  NOW_PUSH_KEYS     JSON {"pub","priv"} con las claves VAPID (variable del repositorio)
+  NOW_PUSH_SUBS     JSON con los dispositivos suscritos a las notificaciones
+  NOW_PUSH_TEST     =1 para enviar una notificación de prueba y nada más
 """
 from __future__ import annotations
 
 import hashlib
+import html
 import json
 import logging
 import os
@@ -31,7 +37,7 @@ from collections import defaultdict
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
-from urllib.parse import quote_plus
+from urllib.parse import quote_plus, urlparse
 
 import feedparser
 import requests
@@ -68,6 +74,40 @@ def parse_date(entry):
 
 def clean_html(text: str) -> str:
     return re.sub(r"\s+", " ", re.sub(r"<[^>]+>", " ", text or "")).strip()
+
+
+_BOILER = [
+    re.compile(r"\s*The post .{0,240}? appeared first on .*$", re.I),
+    re.compile(r"\s*(Continue reading|Read more|Read the full (story|article)|Leer m[aá]s|Lee m[aá]s|Seguir leyendo|Sigue leyendo|Lire la suite)\b.*$", re.I),
+    re.compile(r"\s*(Sign up|Subscribe|Suscr[ií]bete|Follow us)\b.{0,120}$", re.I),
+    re.compile(r"\s*\[?(…|\.\.\.)\]?\s*$"),
+]
+SUMMARY_MAX = 240
+
+
+def tidy_summary(raw: str, title: str) -> str:
+    """Resumen breve a partir de la descripción del feed: limpia restos de
+    maquetación, descarta lo que solo repite el titular y recorta a ~240 caracteres."""
+    text = clean_html(html.unescape(raw or ""))
+    for pat in _BOILER:
+        text = pat.sub("", text).strip()
+    t = (title or "").strip()
+    if t and text.lower().startswith(t.lower()):
+        text = text[len(t):].lstrip(" -–—:|.·").strip()
+    if len(text) < 60:
+        return ""
+    if jaccard(keywords(text), keywords(t)) > 0.8 and len(text) < len(t) + 40:
+        return ""
+    if len(text) > SUMMARY_MAX:
+        cut = text[:SUMMARY_MAX]
+        end = max(cut.rfind(". "), cut.rfind("? "), cut.rfind("! "))
+        text = cut[:end + 1] if end >= 110 else cut[:cut.rfind(" ")].rstrip(" ,;:-–—") + "…"
+    return text
+
+
+def better_summary(old: str, new: str) -> bool:
+    """Se queda con el resumen más completo; la diferencia debe ser clara para no ir cambiándolo."""
+    return bool(new) and (not old or len(new) > len(old) + 40)
 
 
 def extract_image(entry):
@@ -107,7 +147,7 @@ def fetch_feed(url: str, max_age_hours: int) -> list[dict]:
                 title, source = (p.strip() for p in title.rsplit(" - ", 1))
             out.append({
                 "title": title, "link": getattr(e, "link", ""),
-                "summary": clean_html(getattr(e, "summary", ""))[:400],
+                "summary": "" if "news.google.com" in url else clean_html(html.unescape(getattr(e, "summary", "") or getattr(e, "description", "")))[:900],
                 "source": source or short_source(feed_title, url),
                 "image": extract_image(e), "pub_date": pub,
             })
@@ -260,6 +300,9 @@ def merge(stories: list[dict], fetched: dict[str, list[dict]], topics: list[dict
                         "lang": detect_lang(title + " " + art.get("summary", "")), "aff": affinity(title),
                         "img": art.get("image") or "", "a": [], "_kw": set(kw), "first": ts, "last": ts}
                 pool.append(best); stories.append(best); created += 1
+            sm = tidy_summary(art.get("summary", ""), title)
+            if better_summary(best.get("sm", ""), sm):
+                best["sm"] = sm                            # resumen más completo de entre los medios
             if any(a[0] == src for a in best["a"]):
                 continue                                   # cada medio cuenta una vez
             best["a"].append([src, ts, link if sum(1 for a in best["a"] if a[2]) < max_links else ""])
@@ -287,7 +330,7 @@ def prune(stories: list[dict], topics: list[dict], now: int) -> list[dict]:
     return sorted(out, key=lambda s: s["last"], reverse=True)
 
 
-def write_outputs(stories: list[dict], topics: list[dict], now: int) -> None:
+def write_outputs(stories: list[dict], topics: list[dict], now: int, notified: dict | None = None) -> None:
     DATA_DIR.mkdir(parents=True, exist_ok=True)
     meta = {
         "updated": now,
@@ -296,10 +339,13 @@ def write_outputs(stories: list[dict], topics: list[dict], now: int) -> None:
                         "icon": t.get("icon") or "📰", "color": t.get("color"),
                         "sources": len(t["feeds"]), "queries": len(t["queries"])} for t in topics],
         "authority": CFG["authority_sources"],
+        "notify_threshold": CFG.get("notify_threshold", 75),
     }
 
     def public(s: dict, with_kw: bool) -> dict:
         d = {k: s[k] for k in ("id", "c", "t", "lang", "aff", "img", "a")}
+        if s.get("sm"):
+            d["sm"] = s["sm"]
         if with_kw:
             d["kw"] = sorted(s["_kw"])
         return d
@@ -307,18 +353,129 @@ def write_outputs(stories: list[dict], topics: list[dict], now: int) -> None:
     latest_from = now - CFG["latest_days"] * DAY
     files = {
         "latest.json": {**meta, "days": CFG["latest_days"], "stories": [public(s, False) for s in stories if s["last"] >= latest_from]},
-        "archive.json": {**meta, "days": CFG["keep_days"], "stories": [public(s, True) for s in stories]},
+        "archive.json": {**meta, "days": CFG["keep_days"], "stories": [public(s, True) for s in stories],
+                         "notified": notified or {}},
     }
     for name, payload in files.items():
         path = DATA_DIR / name
         path.write_text(json.dumps(payload, ensure_ascii=False, separators=(",", ":")), encoding="utf-8")
         log.info("%s: %d historias · %.0f KB", name, len(payload["stories"]), path.stat().st_size / 1024)
 
+# ─── Índice de importancia (mismo cálculo que la app) ───────────────────────
+
+def importance(stories: list[dict], now: int, window_days: int) -> list[dict]:
+    """Índice 0–100 de cada historia dentro de la ventana (por defecto, 7 días):
+    40 % cobertura ponderada + 15 % velocidad + 15 % diversidad + 15 % frescura + 15 % afinidad."""
+    start = now - window_days * DAY
+    authority = [a.lower() for a in CFG["authority_sources"]]
+    is_auth = lambda name: any(a in name.lower() for a in authority)
+    rows = []
+    for s in stories:
+        m = sorted((x for x in s["a"] if start <= x[1] <= now), key=lambda x: x[1])
+        if not m:
+            continue
+        names = list(dict.fromkeys(x[0] for x in m))
+        auth = sum(1 for n in names if is_auth(n))
+        first, last = m[0][1], m[-1][1]
+        rows.append({
+            "s": s, "last": last, "cov": len(names), "wcov": len(names) + 0.5 * auth,
+            "vel": sum(1 for x in m if x[1] - first <= DAY) / len(m),
+            "div": 0.5 * min(1, (len(names) - 1) / 4) + (0.5 if auth else 0),
+            "fresh": max(0.0, 1 - (now - last) / (7 * DAY)),
+            "afi": min(1.0, (s.get("aff") or 0) / 2),
+        })
+    max_w = max([1.0] + [r["wcov"] for r in rows])
+    for r in rows:
+        r["idx"] = int(100 * (.40 * r["wcov"] / max_w + .15 * r["vel"] + .15 * r["div"] + .15 * r["fresh"] + .15 * r["afi"]) + .5)
+    return sorted(rows, key=lambda r: (r["idx"], r["last"]), reverse=True)
+
+
+# ─── Notificaciones push ────────────────────────────────────────────────────
+
+def load_json_env(name: str, default):
+    raw = (os.environ.get(name) or "").strip()
+    if not raw:
+        return default
+    try:
+        return json.loads(raw)
+    except ValueError:
+        log.warning("%s no contiene un JSON válido; se ignora.", name)
+        return default
+
+
+def send_pushes(subs: list[dict], keys: dict, messages: list[dict]) -> int:
+    """Envía cada mensaje a cada dispositivo. Devuelve cuántos envíos llegaron al servicio push."""
+    if not subs or not messages:
+        return 0
+    if not keys.get("priv"):
+        log.warning("Hay dispositivos suscritos pero faltan las claves VAPID (NOW_PUSH_KEYS).")
+        return 0
+    try:
+        from pywebpush import webpush, WebPushException
+    except ImportError:
+        log.warning("Falta pywebpush (pip install pywebpush): no se envían notificaciones.")
+        return 0
+    # El identificador VAPID («sub») solo admite un dominio https o un mailto:, sin ruta.
+    u = urlparse(site_url())
+    subject = os.environ.get("NOW_VAPID_SUBJECT") or (f"https://{u.netloc}" if u.scheme == "https" and u.netloc else "mailto:now@example.com")
+    delivered = 0
+    for sub in subs:
+        info = sub.get("sub") or sub
+        for msg in messages:
+            try:
+                webpush(subscription_info=info, data=json.dumps(msg, ensure_ascii=False),
+                        vapid_private_key=keys["priv"], vapid_claims={"sub": subject},
+                        ttl=6 * 3600, timeout=15)
+                delivered += 1
+            except WebPushException as exc:
+                code = getattr(getattr(exc, "response", None), "status_code", None)
+                if code in (404, 410):
+                    log.warning("Dispositivo caducado (borra y vuelve a activar las notificaciones en la app): %s…", info.get("endpoint", "")[:60])
+                    break
+                log.warning("Fallo al enviar la notificación (%s): %s", code, str(exc)[:160])
+            except Exception as exc:                        # red, claves mal formadas…
+                log.warning("Fallo al enviar la notificación: %s", str(exc)[:160])
+    return delivered
+
+
+def notify(stories: list[dict], topics: list[dict], previous: dict, now: int) -> dict:
+    """Avisa de las historias que superan el umbral y no se habían avisado. Devuelve el registro actualizado."""
+    keys, subs = load_json_env("NOW_PUSH_KEYS", {}), load_json_env("NOW_PUSH_SUBS", [])
+    if os.environ.get("NOW_PUSH_TEST") == "1":
+        n = send_pushes(subs, keys, [{"title": "Now · prueba", "body": "Las notificaciones funcionan ✅", "url": "./", "tag": "now-test"}])
+        log.info("Prueba de notificación enviada a %d dispositivo(s).", n)
+    thr = CFG.get("notify_threshold", 75)
+    seen = previous.get("notified")
+    first_run = seen is None                                # primera vez con esta función: se registra sin avisar
+    seen = {k: v for k, v in (seen or {}).items() if v >= now - CFG["keep_days"] * DAY}
+    cats = {t["id"]: t for t in topics}
+    fresh_enough = now - CFG.get("notify_max_age_hours", 36) * 3600
+    pending = [r for r in importance(stories, now, CFG["latest_days"])
+               if r["idx"] >= thr and r["s"]["id"] not in seen and r["s"]["c"] in cats]
+    if not pending:
+        return seen
+    if first_run:
+        log.info("Primera ejecución con notificaciones: %d historias ≥ %d registradas sin avisar.", len(pending), thr)
+        seen.update({r["s"]["id"]: now for r in pending})
+        return seen
+    to_send = [r for r in pending if r["last"] >= fresh_enough][:CFG.get("notify_max_per_run", 3)]
+    messages = []
+    for r in to_send:
+        c = cats[r["s"]["c"]]
+        messages.append({"title": f"{c.get('icon') or '📰'} {c.get('short') or c['name']} · importancia {r['idx']}",
+                         "body": r["s"]["t"][:160], "url": f"./#s={r['s']['id']}", "tag": r["s"]["id"], "idx": r["idx"]})
+    delivered = send_pushes(subs, keys, messages)
+    log.info("Notificaciones: %d historia(s) ≥ %d · %d envío(s) · %d dispositivo(s).", len(messages), thr, delivered, len(subs))
+    if delivered or not subs:                               # si había dispositivos y todo falló, se reintenta en la próxima
+        seen.update({r["s"]["id"]: now for r in pending})   # también las que no cupieron: no se avisa tarde
+    return seen
+
 
 def main() -> None:
     t0, now = time.time(), int(time.time())
     topics = load_topics()
-    stories = load_previous().get("stories", [])
+    previous = load_previous()
+    stories = previous.get("stories", [])
     for s in stories:
         s["first"], s["last"] = s["a"][0][1], s["a"][-1][1]
     tasks = url_tasks(topics)
@@ -328,7 +485,8 @@ def main() -> None:
     added, created = merge(stories, fetched, topics, now)
     stories = prune(stories, topics, now)
     log.info("Nuevos: %d artículos · %d historias · guardadas: %d", added, created, len(stories))
-    write_outputs(stories, topics, now)
+    notified = notify(stories, topics, previous, now)
+    write_outputs(stories, topics, now, notified)
     log.info("Listo en %.0f s", time.time() - t0)
 
 
