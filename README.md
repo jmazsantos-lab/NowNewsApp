@@ -57,4 +57,4 @@ Now lee entre 10 y 20 fuentes por tema (feeds RSS y búsquedas de Google News) y
 
 ## Costes
 
-GitHub Actions y Pages son gratis en repositorios públicos, y el plan gratuito de Supabase basta para la función. Lo único de pago es la API de Claude, que solo se usa al añadir un tema: unos pocos céntimos por tema.
+GitHub Actions y Pages son gratis en repositorios públicos, y el plan gratuito de Supabase basta para la función. Lo único de pago es la API de Claude, que solo se usa al añadir un tema: unos 0,10–0,20 USD por tema.
