@@ -2,8 +2,8 @@
 // - La app (HTML, iconos) se sirve desde caché y se actualiza en segundo plano.
 // - Las noticias (data/*.json) se piden siempre a la red; si no hay conexión
 //   se muestra la última versión guardada.
-const SHELL_CACHE = "now-shell-v3";
-const DATA_CACHE = "now-data-v3";
+const SHELL_CACHE = "now-shell-v4";
+const DATA_CACHE = "now-data-v4";
 const SHELL = ["./", "./index.html", "./manifest.webmanifest", "./icon.svg", "./icon-192.png", "./apple-touch-icon.png"];
 
 self.addEventListener("install", event => {

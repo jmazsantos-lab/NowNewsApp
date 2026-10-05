@@ -2,10 +2,11 @@
 
 **Las noticias más importantes de los temas que tú eliges, en una app para el móvil.**
 
-Now lee entre 10 y 20 fuentes por tema (feeds RSS y búsquedas de Google News) y agrupa los artículos que cuentan lo mismo. Cada noticia recibe un **índice de importancia de 0 a 100**. Puedes ver lo más importante de hoy, de los últimos 7 o 30 días o de unas fechas concretas.
+Now lee entre 10 y 20 fuentes por tema (feeds RSS y búsquedas de Google News) y agrupa los artículos que cuentan lo mismo, aunque estén redactados de otra forma o en otro idioma. Cada noticia recibe un **índice de importancia de 0 a 100**, con la ecuación visible en la app. Puedes ver lo más importante de hoy, de los últimos 7 o 30 días o de unas fechas concretas.
 
 - **Temas a tu medida.** En *Ajustes* escribes un tema («Francia», «energía solar», «Fórmula 1») y Claude busca las mejores fuentes, comprueba que sus feeds funcionan y lo añade a la barra. También puedes borrar temas.
-- **Sin servidor propio ni base de datos.** GitHub Actions recoge las noticias cada 2 horas y GitHub Pages publica la app. Una función de Supabase, en un proyecto que ya tengas, gestiona los temas.
+- **Actualización cada hora y cuando quieras.** GitHub Actions recoge las noticias cada hora (con un respaldo a la media hora si GitHub se salta una ejecución) y el botón ↻ de la app, o deslizar hacia abajo, lanza una búsqueda al momento (1–2 minutos).
+- **Sin servidor propio ni base de datos.** GitHub Pages publica la app. Una función de Supabase, en un proyecto que ya tengas, gestiona los temas.
 - **Resumen de cada noticia.** Al abrirla ves la entradilla que publica el medio, el índice de importancia y los enlaces a cada fuente.
 - **Avisos de lo importante.** Notificaciones push cuando aparece una noticia con índice de importancia de 75 o más (umbral configurable).
 - **Se instala en el iPhone** como una app, funciona sin conexión y se refresca deslizando hacia abajo.
@@ -19,7 +20,7 @@ Now lee entre 10 y 20 fuentes por tema (feeds RSS y búsquedas de Google News) y
 | 2 | Settings → Pages → Source: **GitHub Actions** | Tu repositorio |
 | 3 | Actions → «Actualizar noticias» → **Run workflow** | Tu repositorio |
 | 4 | Abre `https://TU-USUARIO.github.io/TU-REPO/` y añádela a la pantalla de inicio | iPhone (Safari) |
-| 5 | Crea un token *fine-grained* con **Contents: Read and write** y **Variables: Read and write** solo sobre tu repositorio | GitHub → Settings → Developer settings |
+| 5 | Crea un token *fine-grained* solo sobre tu repositorio con **Contents**, **Variables** y **Actions** en *Read and write* | GitHub → Settings → Developer settings |
 | 6 | Crea una clave de la API de Claude | console.anthropic.com |
 | 7 | Crea la Edge Function `now` con `supabase/functions/now/index.ts` y desactiva **Verify JWT** | Supabase (cualquier proyecto) |
 | 8 | Añade los secrets de la función (tabla de abajo) | Supabase → Edge Functions → Secrets |
@@ -41,7 +42,7 @@ Now lee entre 10 y 20 fuentes por tema (feeds RSS y búsquedas de Google News) y
 
 ## Notificaciones
 
-Cada vez que el workflow construye las noticias (cada 2 horas) calcula el índice de las historias de los últimos 7 días y avisa de las que llegan a **75** y todavía no se habían avisado. Como máximo envía 3 avisos por vez, y al tocar uno se abre la ficha de esa noticia.
+Cada vez que el workflow construye las noticias (cada hora o al pulsar ↻) calcula el índice de las historias de los últimos 7 días y avisa de las que llegan a **75** y todavía no se habían avisado. Como máximo envía 3 avisos por vez, y al tocar uno se abre la ficha de esa noticia.
 
 - **Cómo funciona.** Web Push estándar (VAPID). Al activar las notificaciones, la función de Supabase crea las claves y guarda los dispositivos en dos variables del repositorio (`NOW_PUSH_KEYS`, `NOW_PUSH_SUBS`); el workflow las lee y envía los avisos. No hay servidor ni base de datos adicionales, ni coste.
 - **iPhone y iPad.** Hace falta iOS 16.4 o superior y abrir Now desde el icono de la pantalla de inicio. Safari no permite notificaciones a las páginas normales.
@@ -58,17 +59,27 @@ Cada vez que el workflow construye las noticias (cada 2 horas) calcula el índic
 | `now_config.json` → `profile_keywords` | Palabras de tus intereses; suben el índice de las noticias que las contienen |
 | `now_config.json` → `authority_sources` | Medios que pesan más en el índice (agencias, prensa de referencia) |
 | `now_config.json` → `notify_threshold` | Índice a partir del cual se envía una notificación (75) |
-| `.github/workflows/update.yml` | Frecuencia de actualización (por defecto, cada 2 horas de 05:00 a 23:00 en Cuba) |
+| `.github/workflows/update.yml` | Frecuencia de actualización (por defecto, cada hora a las :07, con respaldo a las :37) |
 
-## Índice de importancia
+## Índice de importancia (v2)
 
-| Componente | Peso | Qué mide |
-|---|---|---|
-| Cobertura | 40 % | Medios distintos que publican la noticia. Las agencias cuentan 1,5 |
-| Velocidad | 15 % | Parte de las menciones que llega en las primeras 24 h |
-| Diversidad | 15 % | Variedad de medios y presencia de una agencia |
-| Frescura | 15 % | Cuánto hace de la última mención |
-| Afinidad | 15 % | Coincidencia con tus intereses (`profile_keywords`) |
+```
+Índice = 100 × (0,40·C + 0,20·I + 0,15·A + 0,10·D + 0,10·R + 0,05·P)
+```
+
+| Factor | Peso | Fórmula (0 a 1) | Qué mide |
+|---|---|---|---|
+| **C** Cobertura | 40 % | ln(1 + medios + 0,5·referencia) ÷ ln(1 + 20) | Medios distintos que la publican; escala logarítmica, máximo con 20 |
+| **I** Impulso | 20 % | ln(1 + medios en 12 h) ÷ ln(1 + 10) | Lo que está estallando ahora |
+| **A** Alcance | 15 % | ½·mín(1, (secciones − 1) ÷ 2) + ½·mín(1, referencia ÷ 2) | Si salta a otras secciones y la cubren agencias o prensa de referencia |
+| **D** Duración | 10 % | mín(1, (días con medios nuevos − 1) ÷ 2) | Si sigue sumando medios varios días |
+| **R** Recencia | 10 % | 0,5 ^ (horas desde la última mención ÷ vida media) | Vida media de 12 h (Hoy), 24 h (7 días) o 72 h (30 días) |
+| **P** Preferencias | 5 % | mín(1, palabras de interés ÷ 2) | Tus `profile_keywords` |
+
+- **Agrupación.** Antes del índice, cada artículo se compara con las noticias de las últimas 48 h de todas las secciones usando TF-IDF sobre titular y entradilla: los términos raros (nombres propios, lugares) pesan mucho y los comunes casi nada. Se une si comparte dos términos distintivos y el coseno supera `cluster_threshold` (0,22). Después se fusionan las historias duplicadas y el titular se actualiza al más reciente.
+- **Ajustar pesos.** Desde la app: ⚙️ → Índice de importancia, o «¿Cómo se calcula?» en cualquier noticia. Se guardan en `now_config.json` → `index.weights` y se usan en la app, en los avisos y en el conector de Claude.
+- **Medios de referencia.** `authority_sources`, con coincidencia de palabra completa.
+- **Filtro de ruido.** `exclude_patterns` descarta titulares publicitarios (cupones, horóscopo, comparativas…).
 
 ## Costes
 

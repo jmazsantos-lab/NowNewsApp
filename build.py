@@ -7,11 +7,11 @@ En cada ejecución:
      El histórico vive en la propia web: no hace falta base de datos.
   2. Lee las fuentes de cada tema de topics.json: feeds RSS y búsquedas de
      Google News.
-  3. Añade cada artículo nuevo a la historia que ya cuenta lo mismo (titular
-     parecido en los últimos días) o crea una historia nueva.
+  3. Agrupa los artículos que cuentan lo mismo (TF-IDF sobre titular y
+     entradilla, entre todas las secciones) y fusiona historias duplicadas.
   4. Poda: borra lo que tiene más de 30 días, lo de temas eliminados y se
      queda con las historias más cubiertas de cada tema y día.
-  5. Calcula el índice de importancia de cada historia y envía una notificación
+  5. Calcula el índice de importancia v2 de cada historia y envía una notificación
      push de las que superan el umbral (75) y no se habían avisado antes.
   6. Escribe site/data/latest.json (7 días) y site/data/archive.json (30 días).
 
@@ -28,12 +28,14 @@ from __future__ import annotations
 import hashlib
 import html
 import json
+import math
 import logging
 import os
 import re
 import sys
 import time
-from collections import defaultdict
+import unicodedata
+from collections import Counter, defaultdict
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
@@ -264,56 +266,244 @@ def load_previous() -> dict:
     return data
 
 
-# ─── Agrupación ─────────────────────────────────────────────────────────────
+# ─── Agrupación de artículos en historias ──────────────────────────────────
+# Cada artículo se convierte en un vector de términos (titular ×2 + entradilla),
+# con raíces simples (elecciones/electoral → «eleccion»), alias entre idiomas
+# (Brazil → brasil) y pesos TF-IDF: los nombres propios y términos raros pesan
+# mucho, las palabras comunes casi nada. Un artículo se une a la historia con la
+# que comparte al menos dos términos distintivos y cuyo coseno supera el umbral.
+# Después, las historias que hablan de lo mismo se fusionan. Se agrupa entre
+# todas las secciones: una misma noticia suma los medios de todas ellas.
 
-def merge(stories: list[dict], fetched: dict[str, list[dict]], topics: list[dict], now: int) -> tuple[int, int]:
-    thr, window = CFG["cluster_threshold"], CFG["match_window_days"] * DAY
+_CL_STOP = set("""a al algo ante antes asi aun cada como con contra cual cuando de del desde donde dos e el ella ellas ellos en entre era es esa ese eso esta este esto estos estas fue ha han hasta hay la las le les lo los mas me mi muy no nos o otra otro para pero poco por porque que quien se sea segun ser si sin sobre son su sus tambien tan te tiene tras tu un una uno unos unas y ya
+enero febrero marzo abril mayo junio julio agosto septiembre setiembre octubre noviembre diciembre lunes martes miercoles jueves viernes sabado domingo
+january february march april june july august september october november december monday tuesday wednesday thursday friday saturday sunday
+hoy ayer manana directo vivo ultima ultimas hora horas minuto video fotos noticias noticia sigue claves ahora nuevo nueva nuevos nuevas mientras durante
+the an and or but of to in on at for from by with as is are was were be been has have had will would could should may might can its it this that these those his her their our your you they we he she not no over after before about into than then also just more most new says said say week day days today live update updates latest news what how why who when where which there here up out off amid via
+des du le et pour dans sur une est au aux par do da das em na nas um uma com""".split())
+_ALIAS = {
+    "brazil": "brasil", "brazilian": "brasil", "brazilians": "brasil", "brasileno": "brasil", "brasilena": "brasil",
+    "election": "eleccion", "elections": "eleccion", "electoral": "eleccion", "electorales": "eleccion", "elecciones": "eleccion",
+    "eleicao": "eleccion", "eleicoes": "eleccion", "runoff": "balotaje", "run-off": "balotaje",
+    "vote": "voto", "votes": "voto", "voting": "voto", "votos": "voto", "votacion": "voto", "votaciones": "voto",
+    "spain": "espana", "spanish": "espana", "mexican": "mexico", "mexicano": "mexico", "mexicana": "mexico",
+    "president": "presidente", "presidential": "presidente", "presidencial": "presidente", "presidencia": "presidente",
+    "government": "gobierno", "snap": "adelanto", "calls": "convoca", "call": "convoca",
+    "usa": "eeuu", "us": "eeuu", "u.s.": "eeuu", "ee.uu.": "eeuu",
+}
+MIN_IDF = 2.0           # término distintivo: sale en menos de ~1 de cada 3 artículos (las noticias grandes siguen agrupándose)
+
+
+def norm_text(s: str) -> str:
+    return "".join(c for c in unicodedata.normalize("NFD", (s or "").lower()) if unicodedata.category(c) != "Mn")
+
+
+def _stem(w: str) -> str:
+    if len(w) > 5 and w.endswith("es"):
+        w = w[:-2]
+    elif len(w) > 4 and w.endswith("s"):
+        w = w[:-1]
+    return w[:7]
+
+
+def tokens(text: str) -> list[str]:
+    out = []
+    for w in re.findall(r"[a-z0-9ñ][a-z0-9ñ'\-\.]*[a-z0-9ñ]|[a-z]", norm_text(text)):
+        w = w.strip("'.-")
+        if w in _ALIAS:
+            out.append(_ALIAS[w]); continue
+        if w in _CL_STOP or len(w) < 3 or w.replace(".", "").isdigit():
+            continue
+        out.append(_stem(w))
+    return out
+
+
+def text_vector(title: str, summary: str = "") -> Counter:
+    v = Counter()
+    for t in tokens(title):
+        v[t] += 2
+    for t in tokens(summary)[:30]:
+        v[t] += 1
+    return v
+
+
+class Idf:
+    def __init__(self, docs):
+        self.df, self.n = Counter(), 0
+        for d in docs:
+            self.df.update(set(d)); self.n += 1
+        self.cache = {}
+
+    def __call__(self, t: str) -> float:
+        if t not in self.cache:
+            self.cache[t] = math.log((self.n + 1) / (self.df[t] + 1)) + 1
+        return self.cache[t]
+
+
+def cosine(a: Counter, b: Counter, idf: Idf) -> float:
+    common = a.keys() & b.keys()
+    if sum(1 for t in common if idf(t) >= MIN_IDF) < 2:
+        return 0.0
+    num = sum(a[t] * b[t] * idf(t) ** 2 for t in common)
+    na = math.sqrt(sum((x * idf(t)) ** 2 for t, x in a.items()))
+    nb = math.sqrt(sum((x * idf(t)) ** 2 for t, x in b.items()))
+    return num / (na * nb) if na and nb else 0.0
+
+
+def trim(v: Counter, k: int = 60) -> Counter:
+    return Counter(dict(v.most_common(k))) if len(v) > k else v
+
+
+_AUTH = [re.compile(rf"(?<![a-z0-9]){re.escape(norm_text(a).replace(' ', ''))}(?![a-z0-9])") for a in CFG["authority_sources"]]
+_EXCLUDE = [re.compile(norm_text(p)) for p in CFG.get("exclude_patterns", [])]
+
+
+def is_authority(source: str) -> bool:
+    n = norm_text(source).replace(" ", "")
+    return any(p.search(n) for p in _AUTH)
+
+
+def excluded(title: str) -> bool:
+    n = norm_text(title)
+    return any(p.search(n) for p in _EXCLUDE)
+
+
+def _prepare(s: dict) -> None:
+    kw = s.get("kw") or {}
+    s["_v"] = Counter(kw) if isinstance(kw, dict) else Counter({k: 2 for k in kw})
+    for a in s["a"]:
+        if len(a) < 4:
+            a.append(s["c"])                               # histórico antiguo: sección de la historia
+    s["_cs"] = set(s.get("cs") or []) | {a[3] for a in s["a"]} | {s["c"]}
+    s.setdefault("tt", s["a"][0][1])
+    s["first"], s["last"] = s["a"][0][1], s["a"][-1][1]
+
+
+def _add(s: dict, art: dict, thr: float, idf: Idf, max_links: int) -> bool:
+    """Añade el artículo a la historia. Devuelve True si suma un medio nuevo."""
+    s["_cs"].add(art["topic"])
+    sm = tidy_summary(art.get("summary", ""), art["title"])
+    newer = art["ts"] >= s["tt"] + 6 * 3600
+    if newer and cosine(art["v"], s["_v"], idf) >= thr:   # titular más reciente: la historia ha avanzado
+        s["t"], s["tt"], s["lang"] = art["title"], art["ts"], detect_lang(art["title"] + " " + art.get("summary", ""))
+        if sm:
+            s["sm"] = sm
+    elif better_summary(s.get("sm", ""), sm):
+        s["sm"] = sm
+    s["_v"] = trim(s["_v"] + art["v"])
+    s["aff"] = max(s.get("aff", 0), affinity(art["title"]))
+    if not s["img"] and art.get("image"):
+        s["img"] = art["image"]
+    if any(a[0] == art["source"] for a in s["a"]):
+        return False                                       # cada medio cuenta una vez
+    link = art["link"] if sum(1 for a in s["a"] if a[2]) < max_links else ""
+    s["a"].append([art["source"], art["ts"], link, art["topic"]])
+    s["a"].sort(key=lambda a: a[1])
+    s["first"], s["last"] = s["a"][0][1], s["a"][-1][1]
+    return True
+
+
+def _absorb(keep: dict, other: dict) -> None:
+    seen = {a[0]: a for a in keep["a"]}
+    for a in other["a"]:
+        if a[0] not in seen or a[1] < seen[a[0]][1]:
+            seen[a[0]] = a
+    keep["a"] = sorted(seen.values(), key=lambda a: a[1])
+    keep["first"], keep["last"] = keep["a"][0][1], keep["a"][-1][1]
+    keep["_v"] = trim(keep["_v"] + other["_v"])
+    keep["_cs"] |= other["_cs"]
+    keep["aff"] = max(keep.get("aff", 0), other.get("aff", 0))
+    keep["img"] = keep["img"] or other["img"]
+    if other["tt"] >= keep["tt"] + 6 * 3600:               # el titular más reciente manda
+        keep["t"], keep["tt"], keep["lang"] = other["t"], other["tt"], other.get("lang", keep.get("lang"))
+        if other.get("sm"):
+            keep["sm"] = other["sm"]
+    elif better_summary(keep.get("sm", ""), other.get("sm", "")):
+        keep["sm"] = other["sm"]
+
+
+def merge(stories: list[dict], fetched: dict[str, list[dict]], topics: list[dict], now: int) -> tuple[int, int, dict]:
+    """Agrupa los artículos nuevos en historias. Devuelve (medios añadidos, historias nuevas, fusiones {id: id})."""
+    thr = CFG["cluster_threshold"]
+    window = CFG.get("match_window_hours", 48) * 3600
     max_age, max_links = CFG["max_article_age_hours"] * 3600, CFG["max_links_per_story"]
-    by_topic: dict[str, list[dict]] = defaultdict(list)
     for s in stories:
-        s["_kw"] = set(s.get("kw", []))
-        by_topic[s["c"]].append(s)
+        _prepare(s)
+    by_link = {a[2]: s for s in stories for a in s["a"] if a[2]}
 
-    added = created = 0
-    for t in topics:
-        pool = by_topic[t["id"]]
-        arts = sorted(fetched.get(t["id"], []), key=lambda a: to_epoch(a.get("pub_date")) or now)
-        for art in arts:
+    arts, seen_links = [], set()
+    for tid, items in fetched.items():
+        for art in items:
             title, src = (art.get("title") or "").strip(), (art.get("source") or "").strip()
-            if not title or not src:
+            if not title or not src or excluded(title):
                 continue
             ts = min(to_epoch(art.get("pub_date")) or now, now)
             if now - ts > max_age:
                 continue
-            kw = keywords(title)
-            if len(kw) < 2:
+            v = text_vector(title, art.get("summary", ""))
+            if len(v) < 2:
                 continue
-            best, best_sim = None, 0.0
-            for s in pool:
-                if now - s["last"] <= window:
-                    sim = jaccard(kw, s["_kw"])
-                    if sim > thr and sim > best_sim:
-                        best, best_sim = s, sim
             link = art.get("link") or ""
-            if best is None:
-                best = {"id": hashlib.sha1((link or title).encode()).hexdigest()[:10], "c": t["id"], "t": title,
-                        "lang": detect_lang(title + " " + art.get("summary", "")), "aff": affinity(title),
-                        "img": art.get("image") or "", "a": [], "_kw": set(kw), "first": ts, "last": ts}
-                pool.append(best); stories.append(best); created += 1
-            sm = tidy_summary(art.get("summary", ""), title)
-            if better_summary(best.get("sm", ""), sm):
-                best["sm"] = sm                            # resumen más completo de entre los medios
-            if any(a[0] == src for a in best["a"]):
-                continue                                   # cada medio cuenta una vez
-            best["a"].append([src, ts, link if sum(1 for a in best["a"] if a[2]) < max_links else ""])
-            best["a"].sort(key=lambda a: a[1])
-            best["first"], best["last"] = best["a"][0][1], best["a"][-1][1]
-            if not best["img"] and art.get("image"):
-                best["img"] = art["image"]
-            if len(best["_kw"]) < 40:
-                best["_kw"] |= kw
-            added += 1
-    return added, created
+            arts.append({**art, "title": title, "source": src, "ts": ts, "topic": tid, "v": v, "link": link,
+                         "dup": bool(link) and link in seen_links})
+            seen_links.add(link)
+    arts.sort(key=lambda a: a["ts"])
+
+    active = [s for s in stories if now - s["last"] <= window]
+    idf = Idf([a["v"] for a in arts if not a["dup"]] + [s["_v"] for s in active])
+    inv: dict[str, list[dict]] = defaultdict(list)
+
+    def index(s):
+        for t in s["_v"]:
+            if idf(t) >= MIN_IDF and s not in inv[t]:
+                inv[t].append(s)
+    for s in active:
+        index(s)
+
+    added = created = 0
+    for art in arts:
+        if art["link"] and art["link"] in by_link:        # mismo artículo ya leído (otra sección u otra ejecución)
+            by_link[art["link"]]["_cs"].add(art["topic"])
+            continue
+        best, best_sim = None, 0.0
+        cands = {id(s): s for t in art["v"] if idf(t) >= MIN_IDF for s in inv.get(t, [])}
+        for s in cands.values():
+            sim = cosine(art["v"], s["_v"], idf)
+            if sim > best_sim:
+                best, best_sim = s, sim
+        if best is None or best_sim < thr:
+            best = {"id": hashlib.sha1((art["link"] or art["title"]).encode()).hexdigest()[:10], "c": art["topic"],
+                    "t": art["title"], "tt": art["ts"], "lang": detect_lang(art["title"] + " " + art.get("summary", "")),
+                    "aff": 0, "img": "", "a": [], "_v": Counter(), "_cs": {art["topic"]}, "first": art["ts"], "last": art["ts"]}
+            stories.append(best); created += 1
+        added += _add(best, art, thr, idf, max_links)
+        if art["link"]:
+            by_link[art["link"]] = best
+        index(best)
+
+    # Fusión: historias recientes que cuentan lo mismo (también corrige el histórico)
+    merged: dict[str, str] = {}
+    pool = sorted((s for s in stories if now - s["last"] <= window), key=lambda s: -len(s["a"]))
+    alive, dead = {id(s) for s in pool}, set()
+    for s in pool:
+        if id(s) not in alive:
+            continue
+        for t in list(s["_v"]):
+            if idf(t) < MIN_IDF:
+                continue
+            for o in inv.get(t, []):
+                if o is s or id(o) not in alive:
+                    continue
+                if cosine(s["_v"], o["_v"], idf) >= thr:
+                    _absorb(s, o); alive.discard(id(o)); dead.add(id(o)); merged[o["id"]] = s["id"]
+    if merged:
+        stories[:] = [s for s in stories if id(s) not in dead]
+        log.info("Historias fusionadas por tratar lo mismo: %d", len(merged))
+
+    for s in stories:                                      # sección principal = la que más medios aporta
+        counts = Counter(a[3] for a in s["a"])
+        s["c"] = counts.most_common(1)[0][0] if counts else s["c"]
+    return added, created, merged
 
 
 def prune(stories: list[dict], topics: list[dict], now: int) -> list[dict]:
@@ -321,8 +511,14 @@ def prune(stories: list[dict], topics: list[dict], now: int) -> list[dict]:
     keep_from = now - CFG["keep_days"] * DAY
     groups: dict[tuple, list[dict]] = defaultdict(list)
     for s in stories:
-        if s["a"] and s["c"] in ids and s["last"] >= keep_from:
-            groups[(s["c"], datetime.fromtimestamp(s["first"], timezone.utc).date())].append(s)
+        s["a"] = [a for a in s["a"] if a[3] in ids]        # menciones de secciones borradas
+        s["_cs"] = {c for c in s["_cs"] if c in ids}
+        if not s["a"] or s["last"] < keep_from:
+            continue
+        s["first"], s["last"] = s["a"][0][1], s["a"][-1][1]
+        if s["c"] not in ids:
+            s["c"] = Counter(a[3] for a in s["a"]).most_common(1)[0][0]
+        groups[(s["c"], datetime.fromtimestamp(s["first"], timezone.utc).date())].append(s)
     out = []
     for g in groups.values():
         g.sort(key=lambda s: (len(s["a"]), bool(s["img"]), s["last"]), reverse=True)
@@ -339,15 +535,18 @@ def write_outputs(stories: list[dict], topics: list[dict], now: int, notified: d
                         "icon": t.get("icon") or "📰", "color": t.get("color"),
                         "sources": len(t["feeds"]), "queries": len(t["queries"])} for t in topics],
         "authority": CFG["authority_sources"],
+        "index": index_config(),
         "notify_threshold": CFG.get("notify_threshold", 75),
     }
 
-    def public(s: dict, with_kw: bool) -> dict:
+    def public(s: dict, archive: bool) -> dict:
         d = {k: s[k] for k in ("id", "c", "t", "lang", "aff", "img", "a")}
+        d["cs"] = sorted(s.get("_cs") or {s["c"]})
         if s.get("sm"):
             d["sm"] = s["sm"]
-        if with_kw:
-            d["kw"] = sorted(s["_kw"])
+        if archive:
+            d["kw"] = dict(s["_v"].most_common(40))
+            d["tt"] = s.get("tt", s["first"])
         return d
 
     latest_from = now - CFG["latest_days"] * DAY
@@ -361,32 +560,61 @@ def write_outputs(stories: list[dict], topics: list[dict], now: int, notified: d
         path.write_text(json.dumps(payload, ensure_ascii=False, separators=(",", ":")), encoding="utf-8")
         log.info("%s: %d historias · %.0f KB", name, len(payload["stories"]), path.stat().st_size / 1024)
 
-# ─── Índice de importancia (mismo cálculo que la app) ───────────────────────
+
+# ─── Índice de importancia v2 (mismo cálculo en la app y en el conector) ─────
+#
+#   Índice = 100 × (wC·C + wI·I + wA·A + wD·D + wR·R + wP·P)       (pesos que suman 1)
+#
+#   C  Cobertura     ln(1 + medios + 0,5·agencias) / ln(1 + 20)        tope 1
+#   I  Impulso       ln(1 + medios en las últimas 12 h) / ln(1 + 10)   tope 1
+#   A  Alcance       ½·min(1, (secciones − 1)/2) + ½·min(1, agencias/2)
+#   D  Duración      min(1, (días con medios nuevos − 1)/2)
+#   R  Recencia      0,5 ^ (horas desde la última mención / vida media)   vida media = periodo/7, entre 12 y 72 h
+#   P  Preferencias  min(1, palabras de tus intereses en el titular / 2)
+
+INDEX_DEFAULT = {
+    "weights": {"cobertura": 0.40, "impulso": 0.20, "alcance": 0.15, "duracion": 0.10, "recencia": 0.10, "preferencias": 0.05},
+    "ref_outlets": 20, "ref_recent": 10, "recent_hours": 12,
+}
+
+
+def index_config() -> dict:
+    ix = CFG.get("index") or {}
+    w = {**INDEX_DEFAULT["weights"], **(ix.get("weights") or {})}
+    w = {k: max(0.0, float(v)) for k, v in w.items() if k in INDEX_DEFAULT["weights"]}
+    total = sum(w.values()) or 1.0
+    return {**INDEX_DEFAULT, **{k: v for k, v in ix.items() if k != "weights"},
+            "weights": {k: round(v / total, 4) for k, v in w.items()}}
+
+
+def factors(s: dict, start: int, end: int, now: int, ix: dict) -> dict | None:
+    m = [x for x in s["a"] if start <= x[1] <= end]
+    if not m:
+        return None
+    names = list(dict.fromkeys(x[0] for x in m))
+    auth = sum(1 for n in names if is_authority(n))
+    ref = min(now, end)
+    last = max(x[1] for x in m)
+    recent = len({x[0] for x in m if x[1] >= ref - ix["recent_hours"] * 3600})
+    sections = len({x[3] if len(x) > 3 else s["c"] for x in m})
+    days = len({x[1] // DAY for x in m})
+    half = min(72 * 3600, max(12 * 3600, (end - start) / 7))
+    f = {
+        "cobertura": min(1.0, math.log(1 + len(names) + 0.5 * auth) / math.log(1 + ix["ref_outlets"])),
+        "impulso": min(1.0, math.log(1 + recent) / math.log(1 + ix["ref_recent"])),
+        "alcance": 0.5 * min(1.0, (sections - 1) / 2) + 0.5 * min(1.0, auth / 2),
+        "duracion": min(1.0, (days - 1) / 2),
+        "recencia": 0.5 ** (max(0, ref - last) / half),
+        "preferencias": min(1.0, (s.get("aff") or 0) / 2),
+    }
+    idx = int(100 * sum(ix["weights"][k] * f[k] for k in f) + 0.5)
+    return {"s": s, "f": f, "idx": idx, "last": last, "outlets": len(names), "auth": auth,
+            "recent": recent, "sections": sections, "days": days}
+
 
 def importance(stories: list[dict], now: int, window_days: int) -> list[dict]:
-    """Índice 0–100 de cada historia dentro de la ventana (por defecto, 7 días):
-    40 % cobertura ponderada + 15 % velocidad + 15 % diversidad + 15 % frescura + 15 % afinidad."""
-    start = now - window_days * DAY
-    authority = [a.lower() for a in CFG["authority_sources"]]
-    is_auth = lambda name: any(a in name.lower() for a in authority)
-    rows = []
-    for s in stories:
-        m = sorted((x for x in s["a"] if start <= x[1] <= now), key=lambda x: x[1])
-        if not m:
-            continue
-        names = list(dict.fromkeys(x[0] for x in m))
-        auth = sum(1 for n in names if is_auth(n))
-        first, last = m[0][1], m[-1][1]
-        rows.append({
-            "s": s, "last": last, "cov": len(names), "wcov": len(names) + 0.5 * auth,
-            "vel": sum(1 for x in m if x[1] - first <= DAY) / len(m),
-            "div": 0.5 * min(1, (len(names) - 1) / 4) + (0.5 if auth else 0),
-            "fresh": max(0.0, 1 - (now - last) / (7 * DAY)),
-            "afi": min(1.0, (s.get("aff") or 0) / 2),
-        })
-    max_w = max([1.0] + [r["wcov"] for r in rows])
-    for r in rows:
-        r["idx"] = int(100 * (.40 * r["wcov"] / max_w + .15 * r["vel"] + .15 * r["div"] + .15 * r["fresh"] + .15 * r["afi"]) + .5)
+    ix = index_config()
+    rows = [r for r in (factors(s, now - window_days * DAY, now, now, ix) for s in stories) if r]
     return sorted(rows, key=lambda r: (r["idx"], r["last"]), reverse=True)
 
 
@@ -438,7 +666,7 @@ def send_pushes(subs: list[dict], keys: dict, messages: list[dict]) -> int:
     return delivered
 
 
-def notify(stories: list[dict], topics: list[dict], previous: dict, now: int) -> dict:
+def notify(stories: list[dict], topics: list[dict], previous: dict, now: int, merged: dict | None = None) -> dict:
     """Avisa de las historias que superan el umbral y no se habían avisado. Devuelve el registro actualizado."""
     keys, subs = load_json_env("NOW_PUSH_KEYS", {}), load_json_env("NOW_PUSH_SUBS", [])
     if os.environ.get("NOW_PUSH_TEST") == "1":
@@ -448,6 +676,9 @@ def notify(stories: list[dict], topics: list[dict], previous: dict, now: int) ->
     seen = previous.get("notified")
     first_run = seen is None                                # primera vez con esta función: se registra sin avisar
     seen = {k: v for k, v in (seen or {}).items() if v >= now - CFG["keep_days"] * DAY}
+    for old, new in (merged or {}).items():                 # si una historia avisada se fusiona, no se repite el aviso
+        if old in seen:
+            seen.setdefault(new, seen[old])
     cats = {t["id"]: t for t in topics}
     fresh_enough = now - CFG.get("notify_max_age_hours", 36) * 3600
     pending = [r for r in importance(stories, now, CFG["latest_days"])
@@ -475,17 +706,15 @@ def main() -> None:
     t0, now = time.time(), int(time.time())
     topics = load_topics()
     previous = load_previous()
-    stories = previous.get("stories", [])
-    for s in stories:
-        s["first"], s["last"] = s["a"][0][1], s["a"][-1][1]
+    stories = [s for s in previous.get("stories", []) if s.get("a")]
     tasks = url_tasks(topics)
     log.info("%d temas · leyendo %d fuentes…", len(topics), len(tasks))
     fetched = fetch_all(tasks, CFG["max_article_age_hours"])
     log.info("Artículos descargados: %d", sum(len(v) for v in fetched.values()))
-    added, created = merge(stories, fetched, topics, now)
+    added, created, merged = merge(stories, fetched, topics, now)
     stories = prune(stories, topics, now)
-    log.info("Nuevos: %d artículos · %d historias · guardadas: %d", added, created, len(stories))
-    notified = notify(stories, topics, previous, now)
+    log.info("Nuevos: %d medios en historias · %d historias nuevas · guardadas: %d", added, created, len(stories))
+    notified = notify(stories, topics, previous, now, merged)
     write_outputs(stories, topics, now, notified)
     log.info("Listo en %.0f s", time.time() - t0)
 

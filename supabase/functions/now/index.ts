@@ -8,13 +8,14 @@
 // Secrets (Supabase → Edge Functions → Secrets):
 //   NOW_SITE_URL       URL pública de la app, p. ej. https://usuario.github.io/now   (obligatorio)
 //   NOW_GITHUB_REPO    Repositorio con topics.json, p. ej. usuario/now                (para los ajustes)
-//   NOW_GITHUB_TOKEN   Token de GitHub con Contents: Read and write y Variables: Read and write
-//                      en ese repositorio (Variables se usa para las notificaciones)
+//   NOW_GITHUB_TOKEN   Token de GitHub sobre ese repositorio con permisos de lectura y escritura en
+//                      Contents (temas y pesos), Variables (notificaciones) y Actions (botón ↻)
 //   NOW_ADMIN_KEY      Clave que pedirá la app para cambiar temas (elígela tú)
 //   ANTHROPIC_API_KEY  Clave de la API de Claude (para buscar fuentes)
 //   NOW_TIMEZONE       Opcional. Zona horaria de las fechas. Por defecto America/Havana
 //   NOW_AI_MODEL       Opcional. Por defecto claude-sonnet-5-5
 //   NOW_GITHUB_BRANCH  Opcional. Por defecto main
+//   NOW_WORKFLOW_FILE  Opcional. Workflow que actualiza las noticias. Por defecto update.yml
 //
 // Despliegue:  supabase functions deploy now --no-verify-jwt
 
@@ -30,6 +31,7 @@ const TZ = env("NOW_TIMEZONE", "America/Havana");
 const H = 3600e3, D = 24 * H;
 const AI_URL = env("NOW_ANTHROPIC_URL", "https://api.anthropic.com");   // solo para pruebas
 const GH_API = env("NOW_GITHUB_API", "https://api.github.com");
+const WORKFLOW = env("NOW_WORKFLOW_FILE", "update.yml");
 const PROTOCOLS = ["2025-06-18", "2025-03-26", "2024-11-05"];
 const UA = "Mozilla/5.0 (compatible; NowNews/1.0; +https://github.com)";
 
@@ -81,21 +83,55 @@ const ghHeaders = () => ({
   "X-GitHub-Api-Version": "2022-11-28", "User-Agent": "now-app",
 });
 
-async function readTopics(): Promise<{ topics: Topic[]; sha: string }> {
-  const res = await fetch(`${GH_API}/repos/${REPO}/contents/topics.json?ref=${encodeURIComponent(BRANCH)}`, { headers: ghHeaders() });
-  if (!res.ok) throw new Error(`GitHub no devolvió topics.json (${res.status}). Revisa NOW_GITHUB_REPO y NOW_GITHUB_TOKEN.`);
+async function readFile(path: string): Promise<{ text: string; sha: string }> {
+  const res = await fetch(`${GH_API}/repos/${REPO}/contents/${path}?ref=${encodeURIComponent(BRANCH)}`, { headers: ghHeaders() });
+  if (!res.ok) throw new Error(`GitHub no devolvió ${path} (${res.status}). Revisa NOW_GITHUB_REPO y NOW_GITHUB_TOKEN.`);
   const file = await res.json();
-  return { topics: JSON.parse(b64decode(file.content)).topics as Topic[], sha: file.sha };
+  return { text: b64decode(file.content), sha: file.sha };
 }
-
-async function writeTopics(topics: Topic[], sha: string, message: string): Promise<void> {
-  const content = JSON.stringify({ topics }, null, 1) + "\n";
-  const res = await fetch(`${GH_API}/repos/${REPO}/contents/topics.json`, {
+async function writeFile(path: string, text: string, sha: string, message: string): Promise<void> {
+  const res = await fetch(`${GH_API}/repos/${REPO}/contents/${path}`, {
     method: "PUT", headers: { ...ghHeaders(), "Content-Type": "application/json" },
-    body: JSON.stringify({ message, content: b64encode(content), sha, branch: BRANCH }),
+    body: JSON.stringify({ message, content: b64encode(text), sha, branch: BRANCH }),
   });
   if (res.status === 409) throw new Error("Otro cambio se guardó a la vez. Vuelve a intentarlo.");
   if (!res.ok) throw new Error(`GitHub no aceptó el cambio (${res.status}). El token necesita «Contents: Read and write».`);
+}
+async function readTopics(): Promise<{ topics: Topic[]; sha: string }> {
+  const f = await readFile("topics.json");
+  return { topics: JSON.parse(f.text).topics as Topic[], sha: f.sha };
+}
+const writeTopics = (topics: Topic[], sha: string, message: string) =>
+  writeFile("topics.json", JSON.stringify({ topics }, null, 1) + "\n", sha, message);
+
+// ─── Actualizar ahora (botón ↻ de la app) ───────────────────────────────────
+const NEEDS_ACTIONS = "El token de GitHub necesita el permiso «Actions: Read and write» sobre el repositorio.";
+async function runsWith(status: string): Promise<number> {
+  const res = await fetch(`${GH_API}/repos/${REPO}/actions/workflows/${WORKFLOW}/runs?status=${status}&per_page=1`, { headers: ghHeaders() });
+  if (!res.ok) throw new Error(`GitHub no deja consultar las actualizaciones (${res.status}). ${NEEDS_ACTIONS}`);
+  return Number((await res.json()).total_count ?? 0);
+}
+async function refreshNow(): Promise<{ started: boolean; running: boolean }> {
+  if ((await runsWith("in_progress")) + (await runsWith("queued")) > 0) return { started: false, running: true };
+  const res = await fetch(`${GH_API}/repos/${REPO}/actions/workflows/${WORKFLOW}/dispatches`, {
+    method: "POST", headers: { ...ghHeaders(), "Content-Type": "application/json" }, body: JSON.stringify({ ref: BRANCH }),
+  });
+  if (!res.ok) throw new Error(`GitHub no aceptó la actualización (${res.status}). ${NEEDS_ACTIONS}`);
+  return { started: true, running: false };
+}
+
+// ─── Pesos del índice (pantalla «Cómo se calcula») ──────────────────────────
+const WEIGHT_KEYS = ["cobertura", "impulso", "alcance", "duracion", "recencia", "preferencias"];
+async function setWeights(raw: Record<string, unknown>): Promise<Record<string, number>> {
+  const w = Object.fromEntries(WEIGHT_KEYS.map(k => [k, Math.max(0, Math.min(1, Number(raw?.[k]) || 0))]));
+  const total = Object.values(w).reduce((a, b) => a + b, 0);
+  if (!(total > 0)) throw new Error("Los pesos no pueden ser todos cero.");
+  for (const k of WEIGHT_KEYS) w[k] = Math.round((w[k] / total) * 1000) / 1000;
+  const f = await readFile("now_config.json");
+  const cfg = JSON.parse(f.text);
+  cfg.index = { ...(cfg.index ?? {}), weights: w };
+  await writeFile("now_config.json", JSON.stringify(cfg, null, 2) + "\n", f.sha, "Ajustar pesos del índice de importancia");
+  return w;
 }
 
 // ─── Notificaciones push ────────────────────────────────────────────────────
@@ -331,6 +367,10 @@ async function topicsApi(req: Request): Promise<Response> {
         await writeTopics(rest, sha, `Borrar tema: ${t.name}`);
         return json({ ok: true, topics: rest.map(summary) });
       }
+      case "refresh":
+        return json({ ok: true, ...(await refreshNow()) });
+      case "set_weights":
+        return json({ ok: true, weights: await setWeights(body.weights) });
       case "push_key": {
         const k = await pushKeys();
         return json({ ok: true, publicKey: k.pub, devices: (await getDevices()).length });
@@ -362,10 +402,11 @@ async function topicsApi(req: Request): Promise<Response> {
 //  2 · CONECTOR MCP PARA CLAUDE (lectura de noticias)
 // ════════════════════════════════════════════════════════════════════════════
 
-type Article = { src: string; t: number; url: string };
-type Story = { id: string; c: string; t: string; sm?: string; lang: string; aff: number; img: string; a: [string, number, string][]; arts?: Article[] };
+type Article = { src: string; t: number; url: string; c: string };
+type Story = { id: string; c: string; cs?: string[]; t: string; sm?: string; lang: string; aff: number; img: string; a: [string, number, string, string?][]; arts?: Article[] };
 type Category = { id: string; name: string; short?: string; icon: string };
-type Data = { updated: number; categories: Category[]; authority: string[]; stories: Story[] };
+type IndexCfg = { weights: Record<string, number>; ref_outlets: number; ref_recent: number; recent_hours: number };
+type Data = { updated: number; categories: Category[]; authority: string[]; index?: IndexCfg; stories: Story[] };
 
 const cache: Record<string, { at: number; data: Data }> = {};
 async function getData(name: "latest.json" | "archive.json"): Promise<Data> {
@@ -375,7 +416,10 @@ async function getData(name: "latest.json" | "archive.json"): Promise<Data> {
   const res = await fetch(`${SITE}/data/${name}?t=${Date.now()}`);
   if (!res.ok) throw new Error(`No se pudieron leer las noticias (${res.status}).`);
   const data = (await res.json()) as Data;
-  for (const s of data.stories) s.arts = s.a.map(([src, ts, url]) => ({ src, t: ts * 1000, url })).sort((x, y) => x.t - y.t);
+  for (const s of data.stories) {
+    s.cs = s.cs?.length ? s.cs : [s.c];
+    s.arts = s.a.map(([src, ts, url, c]) => ({ src, t: ts * 1000, url, c: c || s.c })).sort((x, y) => x.t - y.t);
+  }
   cache[name] = { at: Date.now(), data };
   return data;
 }
@@ -410,28 +454,41 @@ function findCategory(data: Data, q: unknown) {
     data.categories.find(c => norm(c.name).includes(n) || norm(c.short ?? "").includes(n) || c.id.includes(slug(n))) ?? null;
 }
 
-// Índice 0–100: 40 % cobertura ponderada (agencias ×1,5, relativa al periodo),
-// 15 % velocidad, 15 % diversidad, 15 % frescura, 15 % afinidad con los temas del usuario.
+// Índice v2 (igual que la app y build.py):
+//   Índice = 100 × (wC·C + wI·I + wA·A + wD·D + wR·R + wP·P)
+//   C = ln(1 + medios + 0,5·referencia)/ln(1 + 20) · I = ln(1 + medios en 12 h)/ln(1 + 10)
+//   A = ½·mín(1,(secciones−1)/2) + ½·mín(1, referencia/2) · D = mín(1,(días con medios nuevos−1)/2)
+//   R = 0,5^(horas desde la última mención / vida media) · P = mín(1, palabras de interés/2)
+const DEF_IX: IndexCfg = { weights: { cobertura: .40, impulso: .20, alcance: .15, duracion: .10, recencia: .10, preferencias: .05 }, ref_outlets: 20, ref_recent: 10, recent_hours: 12 };
+const nrmTxt = (t: string) => t.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
 function ranked(data: Data, a: number, b: number) {
   const now = Date.now();
-  const isAuth = (src: string) => { const l = src.toLowerCase(); return data.authority.some(x => l.includes(x)); };
+  const ix = { ...DEF_IX, ...(data.index ?? {}) };
+  const tw = Object.values(ix.weights).reduce((x, y) => x + y, 0) || 1;
+  const w = Object.fromEntries(Object.entries(ix.weights).map(([k, v]) => [k, v / tw]));
+  const res = data.authority.map(x => new RegExp(`(^|[^a-z0-9])${nrmTxt(x).replace(/ /g, "").replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}([^a-z0-9]|$)`));
+  const isAuth = (src: string) => { const n = nrmTxt(src).replace(/ /g, ""); return res.some(r => r.test(n)); };
   const valid = new Set(data.categories.map(c => c.id));
-  const rows = data.stories.filter(s => valid.has(s.c)).map(s => {
+  const rows = data.stories.filter(s => (s.cs ?? [s.c]).some(c => valid.has(c))).map(s => {
     const m = (s.arts ?? []).filter(x => x.t >= a && x.t <= b);
     if (!m.length) return null;
     const names = [...new Set(m.map(x => x.src))];
     const auth = names.filter(isAuth).length;
-    const first = m[0].t, last = m[m.length - 1].t;
-    return {
-      s, m, names, wcov: names.length + 0.5 * auth, first, last,
-      vel: m.filter(x => x.t - first <= D).length / m.length,
-      div: 0.5 * Math.min(1, (names.length - 1) / 4) + (auth ? 0.5 : 0),
-      fresh: Math.max(0, 1 - (now - last) / (7 * D)),
-      afi: Math.min(1, (s.aff || 0) / 2), idx: 0,
+    const ref = Math.min(now, b), first = m[0].t, last = m[m.length - 1].t;
+    const recent = new Set(m.filter(x => x.t >= ref - ix.recent_hours * H).map(x => x.src)).size;
+    const secs = new Set(m.map(x => x.c)).size, days = new Set(m.map(x => Math.floor(x.t / D))).size;
+    const half = Math.min(72 * H, Math.max(12 * H, (b - a) / 7));
+    const f: Record<string, number> = {
+      cobertura: Math.min(1, Math.log(1 + names.length + 0.5 * auth) / Math.log(1 + ix.ref_outlets)),
+      impulso: Math.min(1, Math.log(1 + recent) / Math.log(1 + ix.ref_recent)),
+      alcance: 0.5 * Math.min(1, (secs - 1) / 2) + 0.5 * Math.min(1, auth / 2),
+      duracion: Math.min(1, (days - 1) / 2),
+      recencia: Math.pow(0.5, Math.max(0, ref - last) / half),
+      preferencias: Math.min(1, (s.aff || 0) / 2),
     };
+    const idx = Math.round(100 * Object.keys(f).reduce((t, k) => t + (w[k] ?? 0) * f[k], 0));
+    return { s, m, names, auth, recent, secs, days, first, last, f, idx };
   }).filter((r): r is NonNullable<typeof r> => r !== null);
-  const maxW = Math.max(1, ...rows.map(r => r.wcov));
-  for (const r of rows) r.idx = Math.round(100 * (0.40 * r.wcov / maxW + 0.15 * r.vel + 0.15 * r.div + 0.15 * r.fresh + 0.15 * r.afi));
   return rows.sort((x, y) => y.idx - x.idx || y.last - x.last);
 }
 
@@ -450,6 +507,8 @@ const periodProps = {
 const TOOLS = [
   { name: "resumen", description: "Panorama de Now: última actualización, noticias por sección y las 10 más importantes de las últimas 24 horas (o del periodo indicado).",
     inputSchema: { type: "object", properties: periodProps } },
+  { name: "formula_indice", description: "Explica la ecuación del índice de importancia de Now (factores, fórmulas y pesos actuales).",
+    inputSchema: { type: "object", properties: {} } },
   { name: "secciones", description: "Lista las secciones (temas) de Now: identificador, nombre, nombre corto e icono.",
     inputSchema: { type: "object", properties: {} } },
   { name: "noticias", description: "Ranking de noticias por índice de importancia (0–100), opcionalmente de una sección y en un periodo.",
@@ -468,6 +527,19 @@ const TOOLS = [
 async function callTool(name: string, args: Record<string, unknown>): Promise<unknown> {
   const limit = Math.min(50, Math.max(1, Number(args.limite) || 10));
   switch (name) {
+    case "formula_indice":
+      return {
+        formula: "Índice = 100 × (wC·C + wI·I + wA·A + wD·D + wR·R + wP·P), pesos que suman 1",
+        factores: {
+          C_cobertura: "ln(1 + medios + 0,5·medios de referencia) / ln(1 + 20), tope 1",
+          I_impulso: "ln(1 + medios en las últimas 12 h) / ln(1 + 10), tope 1",
+          A_alcance: "½·mín(1, (secciones − 1)/2) + ½·mín(1, medios de referencia/2)",
+          D_duracion: "mín(1, (días con medios nuevos − 1)/2)",
+          R_recencia: "0,5^(horas desde la última mención / vida media); vida media = periodo/7 entre 12 y 72 h",
+          P_preferencias: "mín(1, palabras de interés en el titular / 2)",
+        },
+        pesos_actuales: (await getData("latest.json")).index?.weights ?? DEF_IX.weights,
+      };
     case "secciones": {
       const d = await getData("latest.json");
       return d.categories.map(c => ({ id: c.id, nombre: c.name, corto: c.short, icono: c.icon }));
@@ -492,7 +564,7 @@ async function callTool(name: string, args: Record<string, unknown>): Promise<un
       if (args.seccion) {
         const c = findCategory(d, args.seccion);
         if (!c) return { error: `No existe la sección «${args.seccion}». Usa la herramienta secciones para ver las disponibles.` };
-        rows = rows.filter(r => r.s.c === c.id);
+        rows = rows.filter(r => (r.s.cs ?? [r.s.c]).includes(c.id));
       }
       if (name === "buscar") {
         const q = norm(String(args.texto ?? ""));
@@ -513,7 +585,12 @@ async function callTool(name: string, args: Record<string, unknown>): Promise<un
         return {
           id, titular: s.t, resumen: s.sm || null, seccion: catName(d, s.c), idioma: s.lang, imagen: s.img || null,
           indice: r?.idx ?? null, posicion_en_30_dias: pos >= 0 ? pos + 1 : null,
-          desglose: r ? { cobertura_medios: r.names.length, velocidad_24h: `${Math.round(r.vel * 100)} %`, diversidad: Math.round(r.div * 100), frescura: Math.round(r.fresh * 100), afinidad: Math.round(r.afi * 100) } : null,
+          desglose: r ? {
+            formula: "Índice = 100 × (wC·C + wI·I + wA·A + wD·D + wR·R + wP·P)",
+            medios: r.names.length, medios_de_referencia: r.auth, medios_ultimas_12h: r.recent, secciones: r.secs, dias_con_medios_nuevos: r.days,
+            factores_0_a_1: Object.fromEntries(Object.entries(r.f).map(([k, v]) => [k, Math.round(v * 100) / 100])),
+            pesos: d.index?.weights ?? DEF_IX.weights,
+          } : null,
           fuentes: (s.arts ?? []).map(x => ({ medio: x.src, fecha: fmt(x.t), enlace: x.url || null })),
         };
       }

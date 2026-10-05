@@ -2,8 +2,11 @@ name: Actualizar noticias
 
 # Lee las fuentes de topics.json, agrupa las noticias y publica la app en
 # GitHub Pages. Se ejecuta:
-#   • cada 2 horas (de 05:00 a 23:00 en Cuba; ajusta los horarios a tu zona),
-#   • cuando cambia topics.json (al añadir o borrar un tema desde la app),
+#   • cada hora, a las :07. GitHub a veces retrasa o se salta las ejecuciones
+#     programadas; por eso hay un respaldo a las :37 que solo actualiza si los
+#     datos publicados tienen más de 50 minutos (si no, termina en segundos),
+#   • al pulsar ↻ o deslizar hacia abajo en la app (vía la función de Supabase),
+#   • cuando cambia topics.json o now_config.json (temas o pesos desde la app),
 #   • a mano desde la pestaña Actions («Run workflow»).
 #
 # Requisito: Settings → Pages → Source = «GitHub Actions».
@@ -14,8 +17,8 @@ name: Actualizar noticias
 
 on:
   schedule:
-    - cron: '0 9,11,13,15,17,19,21,23 * * *'   # UTC
-    - cron: '0 1,3 * * *'
+    - cron: '7 * * * *'    # cada hora
+    - cron: '37 * * * *'   # respaldo: solo actúa si la de las :07 no llegó a ejecutarse
   push:
     branches: [main]
     paths: ['topics.json', 'now_config.json', 'build.py', 'site/**']
@@ -36,7 +39,30 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
+  check:
+    runs-on: ubuntu-latest
+    outputs:
+      run: ${{ steps.age.outputs.run }}
+    steps:
+      - id: pages
+        uses: actions/configure-pages@v5
+      - id: age
+        env:
+          EVENT: ${{ github.event_name }}
+          SITE: ${{ steps.pages.outputs.base_url }}
+        run: |
+          if [ "$EVENT" != "schedule" ]; then echo "run=true" >> "$GITHUB_OUTPUT"; exit 0; fi
+          upd=$(curl -fsSL "$SITE/data/latest.json?t=$(date +%s)" | python3 -c 'import sys, json; print(int(json.load(sys.stdin)["updated"]))' 2>/dev/null || echo 0)
+          age=$(( $(date +%s) - upd ))
+          if [ "$age" -lt 3000 ]; then
+            echo "run=false" >> "$GITHUB_OUTPUT"; echo "Los datos son de hace $((age / 60)) min: no hace falta actualizar."
+          else
+            echo "run=true" >> "$GITHUB_OUTPUT"
+          fi
+
   build:
+    needs: check
+    if: needs.check.outputs.run == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:

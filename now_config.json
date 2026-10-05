@@ -2,14 +2,36 @@
   "api_url": "",
   "keep_days": 30,
   "latest_days": 7,
-  "max_stories_per_topic_day": 15,
+  "max_stories_per_topic_day": 20,
   "max_links_per_story": 8,
-  "match_window_days": 7,
-  "cluster_threshold": 0.28,
+  "match_window_hours": 48,
+  "cluster_threshold": 0.22,
   "max_article_age_hours": 96,
+  "index": {
+    "weights": {
+      "cobertura": 0.4,
+      "impulso": 0.2,
+      "alcance": 0.15,
+      "duracion": 0.1,
+      "recencia": 0.1,
+      "preferencias": 0.05
+    },
+    "ref_outlets": 20,
+    "ref_recent": 10,
+    "recent_hours": 12
+  },
   "notify_threshold": 75,
   "notify_max_per_run": 3,
   "notify_max_age_hours": 36,
+  "exclude_patterns": [
+    "cupones",
+    "codigos? de descuento",
+    "horoscopo",
+    "comparativa de",
+    "donde ver",
+    "como ver .* en vivo",
+    "how much is your salary"
+  ],
   "authority_sources": [
     "reuters",
     "bloomberg",

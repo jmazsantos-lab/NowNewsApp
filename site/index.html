@@ -180,11 +180,71 @@ a{color:inherit}
 
 .status{font-size:11.5px;color:var(--muted);padding-bottom:6px;margin-top:-4px}
 .brand{cursor:pointer}
-#ptr{--hide:calc(-1 * (env(safe-area-inset-top,0px) + 60px));position:fixed;left:50%;top:calc(env(safe-area-inset-top,0px) + 8px);z-index:30;width:40px;height:40px;transform:translate(-50%,var(--hide));transition:transform .2s ease;pointer-events:none;filter:drop-shadow(0 2px 6px rgba(0,0,0,.25))}
-#ptr.ready{filter:drop-shadow(0 0 0 2px #f0b64f) drop-shadow(0 2px 6px rgba(0,0,0,.25))}
-#ptr.spin{transform:translate(-50%,10px);animation:ptrspin .8s linear infinite}
-@keyframes ptrspin{to{transform:translate(-50%,10px) rotate(360deg)}}
+/* Deslizar para actualizar: el radar baja con el dedo; al soltar solo gira el haz, despacio, y desaparece */
+#ptr{--y:calc(-1 * (env(safe-area-inset-top,0px) + 64px));position:fixed;left:50%;top:calc(env(safe-area-inset-top,0px) + 10px);z-index:30;width:40px;height:40px;margin-left:-20px;transform:translateY(var(--y));pointer-events:none;filter:drop-shadow(0 2px 6px rgba(0,0,0,.25))}
+#ptr svg{display:block;width:100%;height:100%}
+#ptr .ring{fill:#17232d;stroke:rgba(240,182,79,.35);stroke-width:1.5;transition:stroke .2s}
+#ptr .arm{transform-origin:32px 32px;transform:rotate(var(--r,0deg))}
+#ptr.ready .ring{stroke:#f0b64f;stroke-width:3}
+#ptr.anim{transition:transform .28s cubic-bezier(.2,.9,.3,1.1),opacity .25s ease}
+#ptr.busy{--y:6px}
+#ptr.busy .arm{animation:arm 1.4s linear infinite}
+#ptr.out{opacity:0;transform:translateY(6px) scale(.5)}
+@keyframes arm{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
 .arts .more{margin:2px 2px 0;font-size:12.5px;color:var(--muted)}
+
+/* ---------- Actualizar ahora ---------- */
+.rf{flex:none;width:34px;height:34px;border-radius:50%;border:1px solid var(--hair);background:var(--panel);display:grid;place-items:center;cursor:pointer;color:var(--ink-2)}
+.rf svg{width:18px;height:18px}
+.rf:hover{color:var(--ink);border-color:var(--amber)}
+.rf.busy{color:var(--amber);border-color:var(--amber)}
+.rf.busy svg{animation:spin 1.4s linear infinite}
+.status{display:flex;align-items:center;gap:6px;flex-wrap:wrap;min-height:18px}
+.status .live{display:inline-flex;align-items:center;gap:6px;color:var(--amber);font-weight:600}
+.status .live svg{width:15px;height:15px}
+.status .live .sweep{transform-origin:32px 32px;animation:spin 1.4s linear infinite}
+@media (max-width:420px){.bar{gap:6px}.brand{font-size:23px;gap:6px}.brand .logo{width:28px;height:28px}.seg button{padding:5px 7px}.rf,.gear{width:32px;height:32px}}
+
+/* ---------- Desglose del índice en la ficha ---------- */
+.bd{display:grid;gap:10px;border:1px solid var(--hair);border-radius:14px;padding:12px 12px 10px}
+.bd .row{display:grid;grid-template-columns:26px minmax(0,1fr) auto;gap:3px 10px;align-items:center}
+.lt{width:26px;height:26px;border-radius:8px;display:grid;place-items:center;font:700 13px var(--f-mono);color:#fff;background:var(--k)}
+.bd .nm{font-size:13.5px;font-weight:600;min-width:0}
+.bd .nm small{font-weight:400;color:var(--muted);margin-left:6px}
+.bd .pt{font:600 13.5px var(--f-mono);text-align:right;white-space:nowrap}
+.bd .pt small{font:500 11px var(--f-mono);color:var(--muted)}
+.bd .mt{grid-column:2/4;display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;align-items:center}
+.bd .mt span{height:6px;border-radius:3px;background:var(--bar-bg);overflow:hidden}
+.bd .mt span i{display:block;height:100%;background:var(--k);border-radius:3px}
+.bd .mt code{font:11px var(--f-mono);color:var(--muted)}
+.bd .tot{border-top:1px dashed var(--hair);padding-top:8px;display:flex;gap:8px;align-items:baseline;font:12px var(--f-mono);color:var(--muted);flex-wrap:wrap}
+.bd .tot b{margin-left:auto;font:700 17px var(--f-mono);color:var(--ink)}
+.how{justify-self:start;background:none;border:0;padding:0;color:var(--amber);font-weight:600;font-size:13px;cursor:pointer;text-decoration:underline;text-underline-offset:3px}
+
+/* ---------- Pantalla de la fórmula ---------- */
+.ix .box{max-width:620px}
+.ix .eqn{font:600 clamp(15px,4.2vw,20px)/1.7 var(--f-mono);text-align:center;padding:14px 10px;background:var(--paper);border:1px solid var(--hair);border-radius:14px}
+.ix .eqn .t{white-space:nowrap}
+.ix .eqn .t b{color:var(--k)}
+.ix .eqn .t i{font-style:normal;color:#fff;background:var(--k);border-radius:5px;padding:0 5px;margin-left:2px}
+.ix .stack{display:flex;height:16px;border-radius:8px;overflow:hidden;gap:2px}
+.ix .stack i{background:var(--k);transition:flex-grow .2s}
+.ix .legend{display:flex;flex-wrap:wrap;gap:4px 12px;font-size:11.5px;color:var(--muted)}
+.ix .legend span::before{content:"";display:inline-block;width:8px;height:8px;border-radius:2px;background:var(--k);margin-right:5px}
+.fx{display:grid;grid-template-columns:40px minmax(0,1fr);gap:2px 12px;padding:14px 0 10px;border-top:1px solid var(--hair)}
+.fx .lt{width:40px;height:40px;border-radius:12px;font-size:19px;grid-row:span 4}
+.fx h4{margin:0;font:650 16px/1.2 var(--f-display);display:flex;align-items:baseline;gap:8px}
+.fx h4 span{margin-left:auto;font:700 15px var(--f-mono);color:var(--k)}
+.fx code{font:12px/1.5 var(--f-mono);background:var(--bar-bg);padding:5px 8px;border-radius:7px;display:block;margin:4px 0}
+.fx p{margin:2px 0 4px;font-size:13px;color:var(--ink-2)}
+.fx input[type=range]{width:100%;accent-color:var(--k);margin:2px 0 0}
+.prev{display:grid;gap:7px}
+.prev .pr{display:grid;grid-template-columns:30px minmax(0,1fr) auto;gap:8px;align-items:center;font-size:13px}
+.prev .pr b{font:700 14px var(--f-mono)}
+.prev .pr span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.prev .pr em{font:600 11.5px var(--f-mono);font-style:normal;color:var(--muted)}
+.prev .pr em.up{color:var(--hop)}.prev .pr em.dn{color:#c0392b}
+.ix .acts{display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap}
 .arts a span{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 
 /* ---------- Ajustes ---------- */
@@ -287,7 +347,7 @@ a{color:inherit}
   </defs>
 </svg>
 
-<svg id="ptr" viewBox="0 0 64 64" aria-hidden="true"><circle class="bg" cx="32" cy="32" r="31" style="fill:#17232d"></circle><circle cx="32" cy="32" r="21" fill="none" stroke="rgba(255,255,255,.14)"></circle><path d="M32 32 L32 4 A28 28 0 0 1 56.2 18 Z" fill="url(#sw)"></path><circle cx="45" cy="23" r="5.5" fill="#f0b64f"></circle></svg>
+<div id="ptr" aria-hidden="true"><svg viewBox="0 0 64 64"><circle class="ring" cx="32" cy="32" r="30"></circle><circle cx="32" cy="32" r="20" fill="none" stroke="rgba(255,255,255,.14)" stroke-width="1.2"></circle><circle cx="32" cy="32" r="10" fill="none" stroke="rgba(255,255,255,.14)" stroke-width="1.2"></circle><g class="arm"><path d="M32 32 L32 5 A27 27 0 0 1 55.4 18.5 Z" fill="url(#sw)"></path><line x1="32" y1="32" x2="55.4" y2="18.5" stroke="#f0b64f" stroke-width="2.2" stroke-linecap="round"></line></g><circle cx="44" cy="23" r="4.5" fill="#f0b64f"></circle></svg></div>
 <div class="splash" id="splash" aria-hidden="true"><div class="mk">
   <svg class="logo" viewBox="0 0 64 64"><circle class="wave" cx="32" cy="32" r="28"></circle><circle class="bg" cx="32" cy="32" r="31"></circle>
     <circle class="grid" cx="32" cy="32" r="21"></circle><circle class="grid" cx="32" cy="32" r="11"></circle>
@@ -309,6 +369,7 @@ a{color:inherit}
         <button data-p="30" aria-pressed="false">30 d</button>
         <button data-p="custom" aria-pressed="false" aria-label="Elegir fechas">📅</button>
       </div>
+      <button class="rf" id="rf" aria-label="Buscar noticias nuevas ahora" title="Buscar noticias nuevas ahora"></button>
       <button class="gear" id="gear" aria-label="Ajustes"></button>
     </div>
     <div class="range" id="range" hidden>
@@ -327,6 +388,7 @@ a{color:inherit}
 
 <div class="sheet cfg" id="settings" hidden role="dialog" aria-modal="true" aria-label="Ajustes"><div class="box" id="cfgBox"></div></div>
 <div class="sheet" id="sheet" hidden role="dialog" aria-modal="true" aria-labelledby="shTitle"><div class="box" id="sheetBox"></div></div>
+<div class="sheet cfg ix" id="ixSheet" hidden role="dialog" aria-modal="true" aria-label="Cómo se calcula el índice"><div class="box" id="ixBox"></div></div>
 
 <script>
 // ─── Now · app de noticias del News Digest ──────────────────────────────────
@@ -343,7 +405,9 @@ const SHORT = { "industria-cervecera":"Cerveza", "pet-envases-plasticos":"PET", 
 const MONO = ["#2f6fb0","#8a4fc4","#1f9e8f","#3c6f38","#c2410c","#a5670f","#be185d","#4338ca"];
 const H = 3600e3, D = 24*H;
 
-let DATA = null, ARCHIVE = null, CATS = [], CAT = {}, AUTH = [], ROWS = [];
+let DATA = null, ARCHIVE = null, CATS = [], CAT = {}, AUTH_RE = [], ROWS = [];
+const RF = { on: false, t0: 0, base: 0, timer: null, tick: 0 };   // «Buscar noticias ahora» en curso
+let PREVIEW_W = null;                   // pesos en edición en la pantalla de la fórmula
 let PENDING_HASH = location.hash;       // #s=<id>: llega al tocar una notificación
 const S = { period: "7", cat: "all", from: null, to: null };
 try { const s = JSON.parse(localStorage.getItem("now") || "{}"); if (s.period) S.period = s.period; if (s.cat) S.cat = s.cat; } catch(e) {}
@@ -358,7 +422,12 @@ const hash = s => [...s].reduce((a, c) => (a*31 + c.charCodeAt(0)) >>> 0, 7);
 const initials = n => { const w = n.replace(/^(the|el|la|los|las)\s+/i, "").split(/[\s.\-]+/).filter(Boolean); return (w.length > 1 ? w[0][0] + w[1][0] : (w[0] || "?").slice(0, 2)).toUpperCase(); };
 const mono = names => `<span class="mono">${names.slice(0, 4).map(n => `<b style="--m:${MONO[hash(n) % MONO.length]}" title="${esc(n)}">${esc(initials(n))}</b>`).join("")}</span>`;
 const vars = c => `--c1:${c.c1};--c2:${c.c2}`;
-const isAuth = src => { const l = src.toLowerCase(); return AUTH.some(a => l.includes(a)); };
+const nrm = t => String(t || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+const reEsc = t => t.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+// Medio de referencia: coincidencia de palabra completa («dw» no casa con «hardware»)
+const isAuth = src => { const n = nrm(src).replace(/ /g, ""); return AUTH_RE.some(r => r.test(n)); };
+const fmt1 = n => n.toLocaleString("es-ES", { minimumFractionDigits: 1, maximumFractionDigits: 1 });
+const fmt2 = n => n.toLocaleString("es-ES", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
 function gauge(v, cls = "gauge", size = 42, stroke = 4) {
   const r = (size - stroke)/2 - 1, C = 2*Math.PI*r;
@@ -380,9 +449,10 @@ function adoptCats() {
   CAT = Object.fromEntries(CATS.map(c => [c.id, c]));
 }
 function adopt(d) {
-  AUTH = d.authority || [];
+  AUTH_RE = (d.authority || []).map(a => new RegExp(`(^|[^a-z0-9])${reEsc(nrm(a).replace(/ /g, ""))}([^a-z0-9]|$)`));
   d.stories.forEach(s => {
-    s.arts = s.a.map(([src, ts, url]) => ({ src, t: ts*1000, url })).sort((x, y) => x.t - y.t);
+    s.cs = s.cs && s.cs.length ? s.cs : [s.c];
+    s.arts = s.a.map(([src, ts, url, c]) => ({ src, t: ts*1000, url, c: c || s.c })).sort((x, y) => x.t - y.t);
     s.link = (s.arts.find(a => a.url) || {}).url || "";
   });
   return d;
@@ -405,6 +475,7 @@ async function load(force) {
 const needsArchive = () => S.period === "30" || (S.period === "custom" && S.from && Date.parse(S.from) < Date.now() - 7*D);
 function setStatus(msg) {
   const el = $("#status");
+  if (RF.on) return paintRefresh();
   if (msg) { el.textContent = msg; return; }
   if (!DATA) return;
   el.textContent = `${navigator.onLine === false ? "Sin conexión · " : ""}Actualizado hace ${ago(DATA.updated*1000)}`;
@@ -422,32 +493,71 @@ function periodLabel() {
   if (S.period === "custom") return `${fmtDay(a)} – ${fmtDay(b)}`;
   return `Últimos ${S.period} días`;
 }
-// Índice 0–100 = 40 % cobertura ponderada (agencias ×1,5, relativa al periodo)
-// + 15 % velocidad + 15 % diversidad + 15 % frescura + 15 % afinidad con tus temas.
-function ranked() {
+// ─── Índice de importancia v2 ───────────────────────────────────────────────
+// Índice = 100 × (wC·C + wI·I + wA·A + wD·D + wR·R + wP·P), con pesos que suman 1.
+// Mismo cálculo en build.py (avisos) y en el conector de Claude.
+const DEF_IX = { weights: { cobertura: .40, impulso: .20, alcance: .15, duracion: .10, recencia: .10, preferencias: .05 }, ref_outlets: 20, ref_recent: 10, recent_hours: 12 };
+const FX = [
+  { k: "cobertura", L: "C", name: "Cobertura", col: "#2f6fb0", f: "ln(1 + medios + 0,5·referencia) ÷ ln(1 + 20)",
+    what: "Cuántos medios distintos publican la noticia. Escala logarítmica: pasar de 1 a 5 medios suma mucho; de 15 a 20, poco. Agencias y prensa de referencia cuentan 1,5. Con 20 o más, el máximo.",
+    data: r => `${r.cov} ${r.cov === 1 ? "medio" : "medios"}${r.auth ? ` · ${r.auth} ref.` : ""}` },
+  { k: "impulso", L: "I", name: "Impulso", col: "#c2410c", f: "ln(1 + medios en las últimas 12 h) ÷ ln(1 + 10)",
+    what: "Cuántos medios se han sumado en las últimas 12 horas. Es lo que hace subir de golpe una noticia que está estallando.",
+    data: r => `${r.recent} en 12 h` },
+  { k: "alcance", L: "A", name: "Alcance", col: "#8a4fc4", f: "½·mín(1, (secciones − 1) ÷ 2) + ½·mín(1, referencia ÷ 2)",
+    what: "Si la noticia salta de una sección a otras (de España a Mundo, por ejemplo) y si la cubren agencias o prensa de referencia.",
+    data: r => `${r.secs} ${r.secs === 1 ? "sección" : "secciones"}` },
+  { k: "duracion", L: "D", name: "Duración", col: "#1f9e8f", f: "mín(1, (días con medios nuevos − 1) ÷ 2)",
+    what: "Las noticias de verdad importantes siguen sumando medios varios días seguidos. Con 3 días, el máximo.",
+    data: r => `${r.days} ${r.days === 1 ? "día" : "días"}` },
+  { k: "recencia", L: "R", name: "Recencia", col: "#a5670f", f: "0,5 ^ (horas desde la última mención ÷ vida media)",
+    what: "Pierde la mitad de su valor cada «vida media»: 12 h en «Hoy», 24 h en 7 días y 72 h en 30 días.",
+    data: r => `hace ${ago(r.last)}` },
+  { k: "preferencias", L: "P", name: "Preferencias", col: "#be185d", f: "mín(1, palabras de tus intereses ÷ 2)",
+    what: "Sube un poco lo que contiene tus palabras clave (cerveza, PET, Krones…). Con poco peso, para que no tape lo importante.",
+    data: r => r.s.aff ? `${r.s.aff} ${r.s.aff === 1 ? "coincidencia" : "coincidencias"}` : "ninguna" },
+];
+const normW = w => { const t = FX.reduce((a, x) => a + Math.max(0, +w[x.k] || 0), 0) || 1; return Object.fromEntries(FX.map(x => [x.k, Math.max(0, +w[x.k] || 0)/t])); };
+function savedWeights() {
+  const srv = (DATA && DATA.index && DATA.index.weights) || DEF_IX.weights, loc = LS("now_weights");
+  if (!loc) return srv;
+  const same = FX.every(x => Math.abs((normW(loc.w)[x.k]) - (normW(srv)[x.k])) < 0.005);
+  if (loc.scope === "global" && (same || Date.now() - loc.at > 6*H)) { LS("now_weights", null); return srv; }
+  return loc.w;
+}
+function IX(override) { const base = { ...DEF_IX, ...((DATA && DATA.index) || {}) }; return { ...base, weights: normW(override || PREVIEW_W || savedWeights()) }; }
+
+function factorsOf(s, a, b, now, ix) {
+  const m = s.arts.filter(x => x.t >= a && x.t <= b);
+  if (!m.length) return null;
+  const names = [...new Set(m.map(x => x.src))], auth = names.filter(isAuth).length;
+  const ref = Math.min(now, b), first = m[0].t, last = m[m.length - 1].t;
+  const recent = new Set(m.filter(x => x.t >= ref - ix.recent_hours*H).map(x => x.src)).size;
+  const secs = new Set(m.map(x => x.c)).size, days = new Set(m.map(x => Math.floor(x.t/D))).size;
+  const half = Math.min(72*H, Math.max(12*H, (b - a)/7));
+  const f = {
+    cobertura: Math.min(1, Math.log(1 + names.length + 0.5*auth)/Math.log(1 + ix.ref_outlets)),
+    impulso: Math.min(1, Math.log(1 + recent)/Math.log(1 + ix.ref_recent)),
+    alcance: 0.5*Math.min(1, (secs - 1)/2) + 0.5*Math.min(1, auth/2),
+    duracion: Math.min(1, (days - 1)/2),
+    recencia: Math.pow(0.5, Math.max(0, ref - last)/half),
+    preferencias: Math.min(1, (s.aff || 0)/2),
+  };
+  const idx = Math.round(100*FX.reduce((t, x) => t + ix.weights[x.k]*f[x.k], 0));
+  return { s, m, names, cov: names.length, auth, recent, secs, days, first, last, half, f, idx };
+}
+function ranked(override) {
   const src = (needsArchive() && ARCHIVE) ? ARCHIVE : DATA;
   if (!src) return [];
-  const [a, b] = windowMs(), now = Date.now();
-  const rows = src.stories.map(s => {
-    const m = s.arts.filter(x => x.t >= a && x.t <= b);
-    if (!m.length) return null;
-    const names = [...new Set(m.map(x => x.src))];
-    const auth = names.filter(isAuth).length;
-    const wcov = names.length + 0.5*auth;
-    const first = m[0].t, last = m[m.length - 1].t;
-    return { s, m, names, cov: names.length, wcov, first, last,
-      vel: m.filter(x => x.t - first <= D).length / m.length,
-      div: 0.5*Math.min(1, (names.length - 1)/4) + (auth ? 0.5 : 0),
-      fresh: Math.max(0, 1 - (now - last)/(7*D)), afi: Math.min(1, (s.aff || 0)/2) };
-  }).filter(r => r && CAT[r.s.c]);
-  const maxW = Math.max(1, ...rows.map(r => r.wcov));
-  rows.forEach(r => r.idx = Math.round(100*(.40*r.wcov/maxW + .15*r.vel + .15*r.div + .15*r.fresh + .15*r.afi)));
-  return rows.sort((x, y) => y.idx - x.idx || y.last - x.last);
+  const [a, b] = windowMs(), now = Date.now(), ix = IX(override);
+  return src.stories.map(s => factorsOf(s, a, b, now, ix)).filter(r => r && r.s.cs.some(c => CAT[c]))
+    .sort((x, y) => y.idx - x.idx || y.last - x.last);
 }
+const primaryCat = s => CAT[s.c] || CAT[s.cs.find(c => CAT[c])];
 
 // ─── Render ─────────────────────────────────────────────────────────────────
 function renderNav(rows) {
-  const counts = {}; rows.forEach(r => counts[r.s.c] = (counts[r.s.c] || 0) + 1);
+  const counts = {}; rows.forEach(r => r.s.cs.forEach(c => counts[c] = (counts[c] || 0) + 1));
   const all = { id: "all", icon: "★", short: "Portada", name: "Portada", c1: "#3a4a56", c2: "#17232d" };
   const items = [all, ...CATS];
   const n = c => c.id === "all" ? rows.length : (counts[c.id] || 0);
@@ -457,7 +567,7 @@ function renderNav(rows) {
 }
 
 function tile(r, cls) {
-  const c = CAT[r.s.c], img = r.s.img;
+  const c = (S.cat !== "all" && CAT[S.cat]) || primaryCat(r.s), img = r.s.img;
   return `<button class="tile ${cls}${img ? " has-ph" : ""}" data-s="${r.s.id}" style="${vars(c)}">
     ${img ? `<img class="ph" src="${esc(img)}" alt="" loading="lazy" referrerpolicy="no-referrer" data-fallback>` : ""}
     <span class="pattern"></span><span class="glyph">${c.icon}</span>
@@ -479,7 +589,7 @@ function render() {
   ROWS = ranked();
   renderNav(ROWS);
   const all = S.cat === "all";
-  const rs = all ? ROWS.slice(0, 21) : ROWS.filter(r => r.s.c === S.cat);
+  const rs = all ? ROWS.slice(0, 21) : ROWS.filter(r => r.s.cs.includes(S.cat));
   const c = all ? null : CAT[S.cat];
   const rest = rs.slice(1);
   $("#main").innerHTML = `
@@ -492,13 +602,13 @@ function render() {
 
 function openSheet(id) {
   const r = ROWS.find(x => x.s.id === id); if (!r) return;
-  const pos = ROWS.indexOf(r) + 1, c = CAT[r.s.c], img = r.s.img;
-  const days = Math.ceil((r.last - r.first)/D);
+  const pos = ROWS.indexOf(r) + 1, c = primaryCat(r.s), img = r.s.img;
+  const others = r.s.cs.filter(x => x !== c.id && CAT[x]).map(x => CAT[x]);
   $("#sheetBox").innerHTML = `
     <div class="tile${img ? " has-ph" : ""}" style="${vars(c)}">
       ${img ? `<img class="ph" src="${esc(img)}" alt="" referrerpolicy="no-referrer" data-fallback>` : ""}
       <span class="pattern"></span><span class="glyph">${c.icon}</span>
-      <span class="body"><span class="cat">${c.icon} ${esc(c.name)}</span></span>
+      <span class="body"><span class="cat">${c.icon} ${esc(c.name)}</span>${others.map(o => ` <span class="cat">${o.icon} ${esc(o.short)}</span>`).join("")}</span>
     </div>
     <div class="in">
       <h2 id="shTitle" style="font:650 22px/1.25 var(--f-display);margin:0;text-wrap:balance">${esc(r.s.t)}</h2>
@@ -506,8 +616,9 @@ function openSheet(id) {
       <div class="score">${gauge(r.idx, "big", 84, 8)}<div>
         <div class="lab">Índice de importancia</div>
         <div class="rk">nº ${pos} de ${ROWS.length} en el periodo</div>
-        <div class="facts"><span>📰 ${r.cov} ${r.cov === 1 ? "medio" : "medios"}</span><span>⚡ ${Math.round(r.vel*100)} % en 24 h</span><span>⏱ ${days > 1 ? `${days} días activa` : "últimas 24 h"}</span></div>
+        <button class="how" data-ix>¿Cómo se calcula?</button>
       </div></div>
+      ${breakdown(r)}
       <div class="arts">${r.m.filter(x => x.url).map(x => `<a href="${esc(x.url)}" target="_blank" rel="noopener">${mono([x.src])}<span>${esc(x.src)}</span><em>${fmtDay(x.t)} ↗</em></a>`).join("")}
         ${r.m.some(x => !x.url) ? `<p class="more">Y también en ${esc(r.m.filter(x => !x.url).map(x => x.src).join(", "))}.</p>` : ""}</div>
       <button class="close" id="closeSheet">Cerrar</button>
@@ -515,6 +626,16 @@ function openSheet(id) {
   $("#sheet").hidden = false; $("#closeSheet").focus();
 }
 const closeSheet = () => { $("#sheet").hidden = true; };
+
+// Desglose: valor de cada factor (0–1) × su peso × 100 = puntos; la suma es el índice
+function breakdown(r) {
+  const w = IX().weights;
+  const rows = FX.map(x => ({ ...x, v: r.f[x.k], w: w[x.k], pts: 100*w[x.k]*r.f[x.k] }));
+  return `<div class="bd">${rows.map(x => `<div class="row" style="--k:${x.col}"><span class="lt">${x.L}</span>
+      <span class="nm">${x.name}<small>${esc(x.data(r))}</small></span><span class="pt">${fmt1(x.pts)} <small>pts</small></span>
+      <span class="mt"><span><i style="width:${Math.round(x.v*100)}%"></i></span><code>${fmt2(x.v)} × ${Math.round(x.w*100)} %</code></span></div>`).join("")}
+    <div class="tot"><span>${rows.map(x => fmt1(x.pts)).join(" + ")}</span><b>= ${r.idx}</b></div></div>`;
+}
 function openFromHash(h) {
   const m = /^#s=([0-9a-f]+)$/.exec(h || ""); if (!m) return;
   try { history.replaceState(null, "", location.pathname + location.search); } catch (e) {}
@@ -538,6 +659,7 @@ async function setPeriod(p) {
 document.addEventListener("click", e => {
   if (e.target.id === "sheet" || e.target.id === "closeSheet") return closeSheet();
   if (e.target.closest(".brand")) return load(true);
+  if (e.target.closest("#rf")) return refreshNow();
   const p = e.target.closest("#period button");
   if (p) return setPeriod(p.dataset.p);
   const c = e.target.closest("[data-c]");
@@ -555,22 +677,148 @@ $("#dFrom").max = $("#dTo").max = iso(Date.now());
 $("#dFrom").min = $("#dTo").min = iso(Date.now() - 30*D);
 if (S.period === "custom") { S.from = iso(Date.now() - 14*D); S.to = iso(Date.now()); $("#dFrom").value = S.from; $("#dTo").value = S.to; }
 
-// Deslizar hacia abajo para refrescar
+// Deslizar hacia abajo para actualizar: el radar baja con el dedo (el haz gira
+// un poco según tiras); al soltar se queda quieto arriba con el haz barriendo
+// despacio hasta que la petición sale, y desaparece. El progreso sigue arriba.
 (() => {
-  const ptr = $("#ptr"); let y0 = null, dy = 0;
-  addEventListener("touchstart", e => { y0 = (scrollY <= 0 && $("#sheet").hidden) ? e.touches[0].clientY : null; dy = 0; }, { passive: true });
+  const ptr = $("#ptr"), arm = ptr.querySelector(".arm"), PULL = 90;
+  let y0 = null, dy = 0;
+  const reset = () => { ptr.classList.remove("ready", "busy", "out", "anim"); ptr.style.removeProperty("--y"); arm.style.removeProperty("--r"); };
+  const idle = () => scrollY <= 0 && $("#sheet").hidden && $("#settings").hidden && $("#ixSheet").hidden;
+  addEventListener("touchstart", e => { y0 = idle() && !ptr.classList.contains("busy") ? e.touches[0].clientY : null; dy = 0; }, { passive: true });
   addEventListener("touchmove", e => {
     if (y0 === null) return;
     dy = Math.max(0, e.touches[0].clientY - y0);
-    ptr.style.transform = `translate(-50%, calc(var(--hide) + ${Math.min(dy, 110)}px)) rotate(${dy*3}deg)`;
-    ptr.classList.toggle("ready", dy > 80);
+    const pull = Math.min(dy*0.55, 96);
+    ptr.classList.remove("anim");
+    ptr.style.setProperty("--y", `calc(-1 * (env(safe-area-inset-top, 0px) + 64px) + ${pull}px)`);
+    arm.style.setProperty("--r", `${Math.min(dy, 220)*1.2}deg`);
+    ptr.classList.toggle("ready", dy > PULL);
   }, { passive: true });
-  addEventListener("touchend", () => {
-    if (y0 !== null && dy > 80) { ptr.classList.add("spin"); load(true).finally(() => { ptr.classList.remove("spin", "ready"); ptr.style.transform = ""; }); }
-    else { ptr.classList.remove("ready"); ptr.style.transform = ""; }
+  addEventListener("touchend", async () => {
+    if (y0 === null) return;
     y0 = null;
+    ptr.classList.add("anim");
+    if (dy <= PULL) { ptr.classList.remove("ready"); ptr.style.removeProperty("--y"); arm.style.removeProperty("--r"); setTimeout(reset, 300); return; }
+    ptr.style.removeProperty("--y"); arm.style.removeProperty("--r");
+    ptr.classList.add("busy");
+    const t0 = Date.now();
+    await refreshNow().catch(() => {});
+    await new Promise(r => setTimeout(r, Math.max(0, 700 - (Date.now() - t0))));
+    ptr.classList.add("out");
+    setTimeout(reset, 320);
   });
 })();
+
+// ─── Buscar noticias ahora ──────────────────────────────────────────────────
+// Pide a la función de Supabase que lance la actualización en GitHub Actions y
+// espera a que se publiquen los datos nuevos (suele tardar 1–2 minutos).
+const MINI_RADAR = `<svg viewBox="0 0 64 64" aria-hidden="true"><circle cx="32" cy="32" r="30" fill="#17232d"></circle><g class="sweep"><path d="M32 32 L32 5 A27 27 0 0 1 55.4 18.5 Z" fill="url(#sw)"></path></g><circle cx="44" cy="23" r="5" fill="#f0b64f"></circle></svg>`;
+const ICON_RF = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-2.64-6.36"/><path d="M21 3v6h-6"/></svg>`;
+function paintRefresh() {
+  $("#rf").classList.toggle("busy", RF.on);
+  if (!RF.on) return;
+  const sec = Math.round((Date.now() - RF.t0)/1000);
+  $("#status").innerHTML = `<span class="live">${MINI_RADAR} Buscando noticias nuevas… ${Math.floor(sec/60)}:${String(sec % 60).padStart(2, "0")}</span><span>· suele tardar 1–2 min</span>`;
+}
+async function refreshNow() {
+  if (RF.on) { toast("Ya estoy buscando noticias nuevas…"); return; }
+  const c = conn();
+  if (!c.url || !c.key) {
+    await load(true);
+    toast("Datos recargados. Para lanzar una búsqueda de noticias al momento, configura la conexión en ⚙️ Ajustes.");
+    return;
+  }
+  RF.on = true; RF.t0 = Date.now(); RF.base = DATA ? DATA.updated : 0; RF.tick = 0; paintRefresh();
+  try {
+    const d = await api("refresh", {}, 20000);
+    if (d.running) toast("Ya había una actualización en marcha: te muestro el resultado al terminar.");
+  } catch (e) { RF.on = false; paintRefresh(); setStatus(); toast(e.message); return; }
+  RF.timer = setInterval(pollRefresh, 1000);
+}
+async function pollRefresh() {
+  paintRefresh();
+  if (++RF.tick % 10) return;                                // consulta los datos cada 10 s
+  try {
+    const d = await getJSON("latest.json");
+    if (d.updated > RF.base) {
+      const before = new Set((DATA ? DATA.stories : []).map(x => x.id));
+      DATA = adopt(d); adoptCats(); ARCHIVE = null;
+      if (needsArchive()) ARCHIVE = adopt(await getJSON("archive.json"));
+      render();
+      const fresh = DATA.stories.filter(x => !before.has(x.id)).length;
+      return finishRefresh(fresh ? `Listo · ${fresh} ${fresh === 1 ? "noticia nueva" : "noticias nuevas"}` : "Listo · no hay noticias nuevas desde la última actualización");
+    }
+  } catch (e) {}
+  if (Date.now() - RF.t0 > 6*60e3) finishRefresh("La actualización está tardando más de lo normal; aparecerá sola cuando termine.");
+}
+function finishRefresh(msg) { clearInterval(RF.timer); RF.on = false; paintRefresh(); setStatus(); toast(msg); }
+
+// ─── Pantalla de la fórmula del índice ──────────────────────────────────────
+function openIndex() {
+  const w = normW(savedWeights());
+  PREVIEW_W = Object.fromEntries(FX.map(x => [x.k, Math.round(w[x.k]*100)]));
+  renderIndex(true); $("#ixSheet").hidden = false;
+}
+function closeIndex() { PREVIEW_W = null; $("#ixSheet").hidden = true; render(); }
+function renderIndex(full) {
+  const w = normW(PREVIEW_W), pct = k => Math.round(w[k]*100);
+  const eq = `Índice = 100 × (${FX.map(x => `<span class="t" style="--k:${x.col}"><b>${fmt2(w[x.k])}</b>·<i>${x.L}</i></span>`).join(" + ")})`;
+  const stack = `<div class="stack">${FX.map(x => `<i style="--k:${x.col};flex-grow:${w[x.k]}"></i>`).join("")}</div>
+    <div class="legend">${FX.map(x => `<span style="--k:${x.col}">${x.name} ${pct(x.k)} %</span>`).join("")}</div>`;
+  const saved = ranked(normW(savedWeights())), now = ranked(w);
+  const pos = Object.fromEntries(saved.map((r, i) => [r.s.id, { i, idx: r.idx }]));
+  const prev = now.slice(0, 6).map((r, i) => {
+    const p = pos[r.s.id], d = p ? p.i - i : 0;
+    return `<div class="pr"><b>${r.idx}</b><span>${esc(r.s.t)}</span><em class="${d > 0 ? "up" : d < 0 ? "dn" : ""}">${d > 0 ? "▲" + d : d < 0 ? "▼" + (-d) : "="}</em></div>`;
+  }).join("");
+  if (!full) {
+    $("#ixEq").innerHTML = eq; $("#ixStack").innerHTML = stack; $("#ixPrev").innerHTML = prev;
+    FX.forEach(x => { $(`#w_${x.k}`).textContent = pct(x.k) + " %"; });
+    return;
+  }
+  const c = conn(), ready = !!(c.url && c.key);
+  $("#ixBox").innerHTML = `
+    <div class="hd"><h2>Cómo se calcula</h2><button class="x" data-ixc="close" aria-label="Cerrar">✕</button></div>
+    <section><h3>📐 La ecuación</h3><div class="eqn" id="ixEq">${eq}</div><div id="ixStack">${stack}</div>
+      <p class="hint">Cada factor vale entre 0 y 1. Se multiplica por su peso y por 100, y la suma es el índice (0–100). Los pesos suman siempre 100 %: si subes uno, los demás pierden proporción.</p></section>
+    <section><h3>🧩 Los seis factores</h3>${FX.map(x => `<div class="fx" style="--k:${x.col}"><span class="lt">${x.L}</span>
+      <h4>${x.name}<span id="w_${x.k}">${pct(x.k)} %</span></h4><code>${x.L} = ${esc(x.f)}</code><p>${esc(x.what)}</p>
+      <input type="range" min="0" max="60" step="1" value="${PREVIEW_W[x.k]}" data-w="${x.k}" aria-label="Peso de ${x.name}"></div>`).join("")}</section>
+    <section><h3>👀 Así quedaría la portada (${esc(periodLabel().toLowerCase())})</h3><div class="prev" id="ixPrev">${prev}</div></section>
+    <section><h3>🧲 Antes del índice: cómo se forma cada noticia</h3>
+      <p class="hint">Now compara titular y entradilla de cada artículo con las noticias de las últimas 48 h de todas las secciones. Las palabras raras (nombres propios, lugares) pesan mucho y las comunes casi nada (TF-IDF). Si comparte al menos dos términos distintivos y se parece lo suficiente, se suma a esa noticia; si no, crea una nueva. Cada medio cuenta una sola vez por noticia, y cuando la historia avanza el titular se actualiza al más reciente.</p></section>
+    <section><div class="acts"><button class="btn ghost" data-ixc="reset">Valores por defecto</button>
+      <button class="btn amber" data-ixc="save">${ready ? "Guardar para todos" : "Guardar en este dispositivo"}</button></div>
+      <p class="hint">${ready ? "Se aplica al momento en este dispositivo y, desde la próxima actualización, en todos y en los avisos." : "Con la conexión configurada en Ajustes, los pesos se guardan para todos tus dispositivos y para los avisos."}</p></section>`;
+}
+async function saveWeights() {
+  const w = Object.fromEntries(Object.entries(normW(PREVIEW_W)).map(([k, v]) => [k, Math.round(v*1000)/1000]));
+  const c = conn();
+  if (c.url && c.key) {
+    try { await api("set_weights", { weights: w }, 30000); }
+    catch (e) { toast(e.message); return; }
+    LS("now_weights", { w, at: Date.now(), scope: "global" });
+    toast("Pesos guardados. Los avisos usarán la nueva fórmula desde la próxima actualización.");
+  } else {
+    LS("now_weights", { w, at: Date.now(), scope: "local" });
+    toast("Pesos guardados en este dispositivo.");
+  }
+  closeIndex();
+}
+document.addEventListener("input", e => {
+  const k = e.target.dataset && e.target.dataset.w;
+  if (k && PREVIEW_W) { PREVIEW_W[k] = +e.target.value; renderIndex(false); }
+});
+document.addEventListener("click", e => {
+  if (e.target.closest("[data-ix]")) { closeSheet(); closeSettings(); return openIndex(); }
+  if (e.target.id === "ixSheet") return closeIndex();
+  const b = e.target.closest("[data-ixc]"); if (!b) return;
+  if (b.dataset.ixc === "close") closeIndex();
+  else if (b.dataset.ixc === "reset") { PREVIEW_W = Object.fromEntries(FX.map(x => [x.k, Math.round(DEF_IX.weights[x.k]*100)])); renderIndex(true); }
+  else if (b.dataset.ixc === "save") saveWeights();
+});
+document.addEventListener("keydown", e => { if (e.key === "Escape" && !$("#ixSheet").hidden) closeIndex(); });
 
 addEventListener("online", setStatus); addEventListener("offline", setStatus);
 setInterval(setStatus, 60000);
@@ -666,7 +914,7 @@ function notifSection(ready) {
   const pill = !sup ? `<span class="pill warn">No disponible</span>` : PUSH.active ? `<span class="pill ok">Activadas</span>` : `<span class="pill">Desactivadas</span>`;
   let body;
   if (!sup) body = `<p class="hint">${ins ? "En iPhone y iPad las notificaciones solo funcionan con Now instalada: pulsa Compartir → «Añadir a pantalla de inicio» y ábrela desde el icono." : "Este navegador no admite notificaciones push."}</p>`;
-  else body = `<p class="hint">Te aviso cuando aparezca una noticia con un índice de importancia de <b>${THR()}</b> o más. Se comprueba cada 2 horas y recibirás como máximo 3 avisos cada vez.</p>
+  else body = `<p class="hint">Te aviso cuando aparezca una noticia con un índice de importancia de <b>${THR()}</b> o más. Se comprueba en cada actualización (cada hora o cuando pulses ↻) y recibirás como máximo 3 avisos cada vez.</p>
     <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">${PUSH.active
       ? `<button class="btn ghost" data-cfg="push-off" ${PUSH.busy ? "disabled" : ""}>Desactivar en este dispositivo</button>`
       : `<button class="btn amber" data-cfg="push-on" ${PUSH.busy || !ready ? "disabled" : ""}>${PUSH.busy ? "Activando…" : "🔔 Activar notificaciones"}</button>`}</div>
@@ -722,6 +970,8 @@ function renderSettings() {
     <section><h3>✨ Añadir un tema</h3>${add}</section>
     <section><h3>Tus temas <span class="pill">${cats.length}</span></h3><div class="tlist">${rows}</div>
       <p class="hint">Los cambios se aplican en unos minutos y los ven todas las personas que usan esta instalación de Now.</p></section>
+    <section><h3>📐 Índice de importancia</h3><p class="hint">Mira la ecuación completa, qué mide cada factor y ajusta sus pesos con una vista previa de la portada.</p>
+      <div><button class="btn ghost" data-ix>Ver la fórmula y ajustar pesos</button></div></section>
     ${notifSection(ready)}
     <section><details ${ready ? "" : "open"}><summary><h3>🔌 Conexión <span class="pill ${ready ? (CFG.connOk === false ? "warn" : "ok") : "warn"}">${ready ? (CFG.connOk === false ? "Revisar" : "Configurada") : "Sin configurar"}</span></h3></summary>
       <form class="conn" id="connForm">
@@ -820,6 +1070,7 @@ document.addEventListener("keydown", e => { if (e.key === "Escape" && CFG.open) 
 if (PEND.adds.length || PEND.dels.length) watchPending();
 
 $("#gear").innerHTML = ICON_GEAR;
+$("#rf").innerHTML = ICON_RF;
 const splashDone = new Promise(res => setTimeout(res, 2040));
 load(false);
 splashDone.then(() => { const sp = document.getElementById("splash"); if (sp) sp.remove(); });
