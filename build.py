@@ -379,18 +379,35 @@ def _prepare(s: dict) -> None:
     s["first"], s["last"] = s["a"][0][1], s["a"][-1][1]
 
 
+def centrality(title: str, centroid: Counter, idf: Idf) -> float:
+    """Cuánto representa un titular a la historia entera (coseno con su vector)."""
+    v = text_vector(title)
+    if not v or not centroid:
+        return 0.0
+    num = sum(v[t] * centroid.get(t, 0) * idf(t) ** 2 for t in v)
+    na = math.sqrt(sum((x * idf(t)) ** 2 for t, x in v.items()))
+    nb = math.sqrt(sum((x * idf(t)) ** 2 for t, x in centroid.items()))
+    return num / (na * nb) if na and nb else 0.0
+
+
+def better_title(cur_t: str, cur_ts: int, new_t: str, new_ts: int, centroid: Counter, idf: Idf) -> bool:
+    """El titular de la historia es el que mejor la representa (no un ángulo secundario).
+    Uno más reciente (6 h o más) lo sustituye si es casi igual de representativo."""
+    c_cur, c_new = centrality(cur_t, centroid, idf), centrality(new_t, centroid, idf)
+    return (new_ts >= cur_ts + 6 * 3600 and c_new >= 0.9 * c_cur) or c_new >= c_cur + 0.15
+
+
 def _add(s: dict, art: dict, thr: float, idf: Idf, max_links: int) -> bool:
     """Añade el artículo a la historia. Devuelve True si suma un medio nuevo."""
     s["_cs"].add(art["topic"])
     sm = tidy_summary(art.get("summary", ""), art["title"])
-    newer = art["ts"] >= s["tt"] + 6 * 3600
-    if newer and cosine(art["v"], s["_v"], idf) >= thr:   # titular más reciente: la historia ha avanzado
+    s["_v"] = trim(s["_v"] + art["v"])
+    if s["a"] and better_title(s["t"], s["tt"], art["title"], art["ts"], s["_v"], idf):
         s["t"], s["tt"], s["lang"] = art["title"], art["ts"], detect_lang(art["title"] + " " + art.get("summary", ""))
         if sm:
             s["sm"] = sm
     elif better_summary(s.get("sm", ""), sm):
         s["sm"] = sm
-    s["_v"] = trim(s["_v"] + art["v"])
     s["aff"] = max(s.get("aff", 0), affinity(art["title"]))
     if not s["img"] and art.get("image"):
         s["img"] = art["image"]
@@ -403,7 +420,7 @@ def _add(s: dict, art: dict, thr: float, idf: Idf, max_links: int) -> bool:
     return True
 
 
-def _absorb(keep: dict, other: dict) -> None:
+def _absorb(keep: dict, other: dict, idf: Idf) -> None:
     seen = {a[0]: a for a in keep["a"]}
     for a in other["a"]:
         if a[0] not in seen or a[1] < seen[a[0]][1]:
@@ -414,7 +431,7 @@ def _absorb(keep: dict, other: dict) -> None:
     keep["_cs"] |= other["_cs"]
     keep["aff"] = max(keep.get("aff", 0), other.get("aff", 0))
     keep["img"] = keep["img"] or other["img"]
-    if other["tt"] >= keep["tt"] + 6 * 3600:               # el titular más reciente manda
+    if better_title(keep["t"], keep["tt"], other["t"], other["tt"], keep["_v"], idf):
         keep["t"], keep["tt"], keep["lang"] = other["t"], other["tt"], other.get("lang", keep.get("lang"))
         if other.get("sm"):
             keep["sm"] = other["sm"]
@@ -463,7 +480,13 @@ def merge(stories: list[dict], fetched: dict[str, list[dict]], topics: list[dict
     added = created = 0
     for art in arts:
         if art["link"] and art["link"] in by_link:        # mismo artículo ya leído (otra sección u otra ejecución)
-            by_link[art["link"]]["_cs"].add(art["topic"])
+            st = by_link[art["link"]]
+            st["_cs"].add(art["topic"])
+            if better_title(st["t"], st["tt"], art["title"], art["ts"], st["_v"], idf):
+                st["t"], st["tt"] = art["title"], art["ts"]
+                sm = tidy_summary(art.get("summary", ""), art["title"])
+                if sm:
+                    st["sm"] = sm
             continue
         best, best_sim = None, 0.0
         cands = {id(s): s for t in art["v"] if idf(t) >= MIN_IDF for s in inv.get(t, [])}
@@ -495,7 +518,7 @@ def merge(stories: list[dict], fetched: dict[str, list[dict]], topics: list[dict
                 if o is s or id(o) not in alive:
                     continue
                 if cosine(s["_v"], o["_v"], idf) >= thr:
-                    _absorb(s, o); alive.discard(id(o)); dead.add(id(o)); merged[o["id"]] = s["id"]
+                    _absorb(s, o, idf); alive.discard(id(o)); dead.add(id(o)); merged[o["id"]] = s["id"]
     if merged:
         stories[:] = [s for s in stories if id(s) not in dead]
         log.info("Historias fusionadas por tratar lo mismo: %d", len(merged))
