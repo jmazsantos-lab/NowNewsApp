@@ -9,12 +9,12 @@
   "max_article_age_hours": 96,
   "index": {
     "weights": {
-      "cobertura": 0.4,
-      "impulso": 0.2,
-      "alcance": 0.15,
-      "duracion": 0.1,
-      "recencia": 0.1,
-      "preferencias": 0.05
+      "cobertura": 0.39,
+      "impulso": 0.247,
+      "alcance": 0.253,
+      "duracion": 0.071,
+      "recencia": 0.039,
+      "preferencias": 0
     },
     "ref_outlets": 20,
     "ref_recent": 10,
